@@ -11,6 +11,7 @@ table = """
 
 """
 
+chat = [-1001400136881]
 users = [529598217, 932736973, 636619912, 555328241, 200635302]
 
 bot = Bot(token=conf.API_TOKEN)
@@ -38,46 +39,47 @@ async def table_com(message: types.Message):
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
 	await message.answer(text=ttable, parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["мат"], commands_prefix=['!'], is_reply=True)
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["плюс"], commands_prefix=['!'], is_reply=True)
 async def add_point(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	ttable = table
 	ulist = list()
 	text = message.text.split()
-	try:
-		if message.text[4:] == '':
-			n = 1
-		else:
-			n = int(message.text[4:])
-	except:
-		return 0
+	if len(text) > 1:
+		try:
+			n = int(text[1])
+		except:
+			return 0
+	else:
+		n = 1
 	pg.message_edit(pg.message(message.reply_to_message["from"]["id"])[1]+n, message.reply_to_message["from"]["id"])
 	for u in users:
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
-	await bot.edit_message_text(chat_id=message.chat.id, text=ttable, message_id=pg.message(1708019201)[1], parse_mode="HTML")
+	await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["немат"], commands_prefix=['!'], is_reply=True)
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["минус"], commands_prefix=['!'], is_reply=True)
 async def remove_point(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	ttable = table
 	ulist = list()
-	try:
-		if message.text[6:] == '':
-			n = 1
-		else:
-			n = int(message.text[6:])
-	except:
-		return 0
+	text = message.text.split()
+	if len(text) > 1:
+		try:
+			n = int(text[1])
+		except:
+			return 0
+	else:
+		n = 1
 	pg.message_edit(pg.message(message.reply_to_message["from"]["id"])[1]-n, message.reply_to_message["from"]["id"])
 	for u in users:
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
-	await bot.edit_message_text(chat_id=message.chat.id, text=ttable, message_id=pg.message(1708019201)[1], parse_mode="HTML")
+	await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["добавить"], commands_prefix=['!'])
 async def new_mat(message: types.Message):
@@ -85,11 +87,12 @@ async def new_mat(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	if len(message.text.split()) < 2:
 		return 0
-	word = message.text.split()[1]
-	if word not in BW:
-		pg.word_import(word)	
-		BW = pg.words()
-		await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Добавлено:\n" + word)
+	word = message.text.split()[1:]
+	for w in word:
+		if w not in BW:
+			pg.word_import(w)
+			BW = pg.words()
+			await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Добавлено:\n" + w)
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["убрать"], commands_prefix=['!'])
 async def remove_mat(message: types.Message):
@@ -97,13 +100,19 @@ async def remove_mat(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	if len(message.text.split()) < 2:
 		return 0
-	word = message.text.split()[1]
-	if word in BW:
-		pg.word_remove(word)
-		BW = pg.words()
-		await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Убрано:\n" + word)
+	word = message.text.split()[1:]
+	for w in word:
+		if w in BW:
+			pg.word_remove(w)
+			BW = pg.words()
+			await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Убрано:\n" + w)
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['set'], commands_prefix=['!'])
+@dp.message_handler(commands=["количество"], commands_prefix=['!'])
+async def count_mat(message: types.Message):
+	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	await message.answer(text=f"Количество мата в БД: {len(BW)}🙂")
+
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["set"], commands_prefix=['!'])
 async def add_com(message: types.Message):
 	text = message.text.split()
 	if len(text) < 3:
@@ -116,7 +125,7 @@ async def add_com(message: types.Message):
 	CL = pg.commands()
 	await message.answer(text=f"Добавлена команда !{text[1]}")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['unset'], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["unset"], commands_prefix=['!'])
 async def remove_com(message: types.Message):
 	text = message.text.split()
 	if len(text) < 2:
@@ -126,7 +135,7 @@ async def remove_com(message: types.Message):
 	CL = pg.commands()
 	await message.answer(text=f"Убрана команда !{text[1]}")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['создать'], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["создать"], commands_prefix=['!'])
 async def add_tovar(message: types.Message):
 	text = message.text.split()
 	if len(text) < 3:
@@ -137,7 +146,7 @@ async def add_tovar(message: types.Message):
 	pg.tovar_import(textt.strip(), text[1])
 	await message.answer(text=f"Новое задание: «{textt}»")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['удалить'], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["удалить"], commands_prefix=['!'])
 async def remove_tovar(message: types.Message):
 	text = message.text.split()
 	if len(text) < 2:
@@ -148,15 +157,20 @@ async def remove_tovar(message: types.Message):
 	pg.tovar_remove(textt.strip())
 	await message.answer(text=f"Убрано задание: «{textt}»")
 
-@dp.message_handler(commands=['задание'], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat, commands=['задания', "квесты", "наказания"], commands_prefix=['!'])
 async def tovary(message: types.Message):
-	await message.answer(text=pg.tovars(), parse_mode="HTML")
+	await message.answer(text=f"{pg.username_export(message.from_user.id)} {pg.tovars()}", parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.text[0] == '!')
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
+async def help_command(message: types.Message):
+	cmds = "!табло\n!плюс / !минус {количество}\n!добавить / !убрать <матслово>\n!количество\n!set / !unset <команда> {текст}\n!создать / !удалить <цена> <название>\n!задания\n!помощь"
+	for c in CL:
+		cmds += f"{c}\n"
+	await message.answer(text=f"{pg.username_export(message.from_user.id)}\n{cmds}")
+
+@dp.message_handler(lambda message: message.text[0] == '!' and (message.from_user.id in users or message.chat.id in chat))
 async def command_com(message: types.Message):
 	cmd = message.text[1:].split()
-	print(cmd)
-	print(CL)
 	if cmd[0] in CL:
 		text = pg.commands_text()[pg.commands().index(cmd[0])]
 		await message.answer(text=f"{pg.username_export(message.from_user.id)} {text}")
@@ -190,9 +204,9 @@ async def command_com(message: types.Message):
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 		for f in ulist:
 			ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
-		await bot.edit_message_text(chat_id=message.chat.id, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+		await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
-@dp.message_handler()
+@dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat)
 async def filter(message: types.Message):
 	if message.from_user.username == None:
 		pg.username_import(message.from_user.first_name, message.from_user.id)
@@ -218,7 +232,7 @@ async def filter(message: types.Message):
 				n += 1
 				print(t.lower(), "is", r[1])
 			else:
-				print("Nope", r[1])
+				pass
 	if n == 0:
 		return 0
 	pg.message_edit(pg.message(message.from_user.id)[1]+n, message.from_user.id)
@@ -227,7 +241,11 @@ async def filter(message: types.Message):
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
-	await bot.edit_message_text(chat_id=message.chat.id, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+	await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+
+@dp.message_handler()
+async def message(message: types.Message):
+	await message.answer(text="Свяжитесь с @rvbsm")
 
 async def db_update():
 	await asyncio.sleep(240)
