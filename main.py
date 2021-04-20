@@ -144,7 +144,7 @@ async def add_tovar(message: types.Message):
 	for t in text[2:]:
 		textt += t + ' '
 	pg.tovar_import(textt.strip(), text[1])
-	await message.answer(text=f"Новое задание: «{textt}»")
+	await message.answer(text=f"<b>🆕Новое задание:</b> «<code>{textt}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["удалить"], commands_prefix=['!'])
 async def remove_tovar(message: types.Message):
@@ -155,11 +155,15 @@ async def remove_tovar(message: types.Message):
 	for t in text[1:]:
 		textt += t + ' '
 	pg.tovar_remove(textt.strip())
-	await message.answer(text=f"Убрано задание: «{textt}»")
+	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{textt.strip()}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat, commands=['задания', "квесты", "наказания"], commands_prefix=['!'])
 async def tovary(message: types.Message):
-	await message.answer(text=f"{pg.username_export(message.from_user.id)} {pg.tovars()}", parse_mode="HTML")
+	a = "<b>НАКАЗАНИЯ:</b> \n\n"
+	tlist = sorted(pg.tovars(), key=lambda x: x[1])
+	for t in tlist:
+		a += f"{t[1]} — <code>{t[0]}</code>\n"
+	await message.answer(text=f"{pg.username_export(message.from_user.id)} {a}", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
 async def help_command(message: types.Message):
@@ -241,6 +245,9 @@ async def filter(message: types.Message):
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
+		for t in pg.tovars():
+			if f[1] == t[1]:
+				await message.answer(text=f"{pg.username_export(f[0])} Вам выпало задание «{t[0]}»")
 	await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 @dp.message_handler()

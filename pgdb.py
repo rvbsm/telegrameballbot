@@ -68,7 +68,4 @@ class DataBase:
 	def tovars(self):
 		self.curpg.execute('''SELECT * FROM "shop"''')
 		rows = self.curpg.fetchall()
-		a = "<b>НАКАЗАНИЯ:</b> \n\n"
-		for r in rows:
-			a += f"{r[0]} - {r[1]}\n"
-		return a
+		return rows
