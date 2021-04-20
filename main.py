@@ -175,7 +175,7 @@ async def tovary(message: types.Message):
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
 async def help_command(message: types.Message):
-	cmds = "!табло\n!плюс / !минус {количество}\n!добавить / !убрать <матслово>\n!set / !unset <команда> {текст}\n!создать / !удалить <название> {цена} {описание}\n\nДопуступные всем:\n<code>!задания</code>\n<code>!количество</code>\n<code>!описание</code>\n<code>!помощь</code>"
+	cmds = "!табло\n!плюс / !минус {количество}\n!добавить / !убрать &lt;матслово&gt;\n!set / !unset &lt;команда&gt; {текст}\n!создать / !удалить &lt;название&gt; {цена} {описание}\n\nДопуступные всем:\n<code>!задания</code>\n<code>!количество</code>\n<code>!описание</code>\n<code>!помощь</code>"
 	for c in CL:
 		cmds += f"\n<code>!{c}</code>"
 	await message.answer(text=f"{pg.username_export(message.from_user.id)}\n{cmds}", parse_mode="HTML")
