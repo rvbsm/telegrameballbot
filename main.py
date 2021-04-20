@@ -109,7 +109,6 @@ async def remove_mat(message: types.Message):
 
 @dp.message_handler(commands=["количество"], commands_prefix=['!'])
 async def count_mat(message: types.Message):
-	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	await message.answer(text=f"Количество мата в БД: {len(BW)}🙂")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["set"], commands_prefix=['!'])
