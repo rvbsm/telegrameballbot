@@ -10,7 +10,6 @@ table = """
 <b>Е-БАЛЛЫ</b>
 
 """
-# СОРТИРОВКА
 
 users = [529598217, 932736973, 636619912, 555328241, 200635302]
 
@@ -44,6 +43,7 @@ async def add_point(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	ttable = table
 	ulist = list()
+	text = message.text.split()
 	try:
 		if message.text[4:] == '':
 			n = 1
@@ -79,7 +79,7 @@ async def remove_point(message: types.Message):
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
 	await bot.edit_message_text(chat_id=message.chat.id, text=ttable, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["плюс"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["добавить"], commands_prefix=['!'])
 async def new_mat(message: types.Message):
 	global BW
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -91,7 +91,7 @@ async def new_mat(message: types.Message):
 		BW = pg.words()
 		await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Добавлено:\n" + word)
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["минус"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["убрать"], commands_prefix=['!'])
 async def remove_mat(message: types.Message):
 	global BW
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -126,7 +126,7 @@ async def remove_com(message: types.Message):
 	CL = pg.commands()
 	await message.answer(text=f"Убрана команда !{text[1]}")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['товар'], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['создать'], commands_prefix=['!'])
 async def add_tovar(message: types.Message):
 	text = message.text.split()
 	if len(text) < 3:
@@ -135,7 +135,7 @@ async def add_tovar(message: types.Message):
 	for t in text[2:]:
 		textt += t + ' '
 	pg.tovar_import(textt.strip(), text[1])
-	await message.answer(text=f"Новый товар {textt}")
+	await message.answer(text=f"Новое задание: «{textt}»")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['удалить'], commands_prefix=['!'])
 async def remove_tovar(message: types.Message):
@@ -146,18 +146,20 @@ async def remove_tovar(message: types.Message):
 	for t in text[1:]:
 		textt += t + ' '
 	pg.tovar_remove(textt.strip())
-	await message.answer(text=f"Убран товар {textt}")
+	await message.answer(text=f"Убрано задание: «{textt}»")
 
-@dp.message_handler(commands=['товары'], commands_prefix=['!'])
+@dp.message_handler(commands=['задание'], commands_prefix=['!'])
 async def tovary(message: types.Message):
 	await message.answer(text=pg.tovars(), parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.text[0] == '!')
 async def command_com(message: types.Message):
-	command = message.text[1:].split()
-	if command in CL:
-		text = pg.commands_text()[pg.commands().index(message.text[0])]
-		await message.answer(text=f"@{pg.username_export(message.from_user.id)} {text}")
+	cmd = message.text[1:].split()
+	print(cmd)
+	print(CL)
+	if cmd[0] in CL:
+		text = pg.commands_text()[pg.commands().index(cmd[0])]
+		await message.answer(text=f"{pg.username_export(message.from_user.id)} {text}")
 	else:
 		n = 0
 		ttable = table
@@ -179,7 +181,7 @@ async def command_com(message: types.Message):
 					n += 1
 					print(t.lower(), r[1])
 				else:
-					print(t.lower(), r[1])
+					pass
 		if n == 0:
 			return 0
 		pg.message_edit(pg.message(message.from_user.id)[1]+n, message.from_user.id)
