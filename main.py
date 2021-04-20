@@ -109,7 +109,7 @@ async def remove_mat(message: types.Message):
 
 @dp.message_handler(commands=["количество"], commands_prefix=['!'])
 async def count_mat(message: types.Message):
-	await message.answer(text=f"Количество мата в БД: {len(BW)}🙂")
+	await message.answer(text=f"{pg.username_export(message.from_user.id)} Количество мата в БД: {len(BW)}🙂")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["set"], commands_prefix=['!'])
 async def add_com(message: types.Message):
@@ -122,7 +122,7 @@ async def add_com(message: types.Message):
 	pg.command_import(text[1], textt)
 	global CL
 	CL = pg.commands()
-	await message.answer(text=f"Добавлена команда !{text[1]}")
+	await message.answer(text=f"Добавлена команда <code>!{text[1]}</code>", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["unset"], commands_prefix=['!'])
 async def remove_com(message: types.Message):
@@ -132,7 +132,7 @@ async def remove_com(message: types.Message):
 	pg.command_remove(text[1])
 	global CL
 	CL = pg.commands()
-	await message.answer(text=f"Убрана команда !{text[1]}")
+	await message.answer(text=f"Убрана команда <code>!{text[1]}</code>", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["создать"], commands_prefix=['!'])
 async def add_tovar(message: types.Message):
@@ -167,14 +167,14 @@ async def tovary(message: types.Message):
 	tlist = sorted(pg.tovars(), key=lambda x: x[1])
 	for t in tlist:
 		if pg.message(message.from_user.id)[1] > int(t[1]):
-			a += f"<s>{t[1]} — <code>{t[0]}</code></s>\n"
+			a += f"<s>{t[1]} — {t[0]}</s>\n"
 		else:
 			a += f"{t[1]} — <code>{t[0]}</code>\n"
 	await message.answer(text=f"{pg.username_export(message.from_user.id)} {a}", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
 async def help_command(message: types.Message):
-	cmds = "!табло\n!плюс / !минус {количество}\n!добавить / !убрать &lt;матслово&gt;\n!set / !unset &lt;команда&gt; {текст}\n!создать / !удалить &lt;название&gt; {цена} {описание}\n\nДопуступные всем:\n<code>!задания</code>\n<code>!количество</code>\n<code>!описание</code>\n<code>!помощь</code>"
+	cmds = "!табло\n!плюс / !минус {количество}\n!добавить / !убрать &lt;матслово&gt;\n!set / !unset &lt;команда&gt; {текст}\n!создать / !удалить &lt;название&gt; {цена} {описание}\n<code>!описание</code>\n\nДопуступные всем:\n<code>!задания</code>\n<code>!количество</code>\n<code>!помощь</code>"
 	for c in CL:
 		cmds += f"\n<code>!{c}</code>"
 	await message.answer(text=f"{pg.username_export(message.from_user.id)}\n{cmds}", parse_mode="HTML")
@@ -191,6 +191,7 @@ async def command_com(message: types.Message):
 		text = message.text.split()
 		textt = str()
 		ulist = list()
+		nlist = list()
 		for l in text:
 			textt += ''.join(t for t in l if t.isalpha()) + ' '
 		seen = set()
@@ -204,17 +205,21 @@ async def command_com(message: types.Message):
 			for r in ratio:
 				if r[1] > 92:
 					n += 1
-					print(pg.username_export(message.from_user.id), t.lower(), r[1])
+					pg.message_edit(pg.message(message.from_user.id)[1]+1, message.from_user.id)
+					nlist.append(int(pg.message(message.from_user.id)))
+					print(pg.username_export(message.from_user.id), t.lower())
 				else:
 					pass
 		if n == 0:
 			return 0
-		pg.message_edit(pg.message(message.from_user.id)[1]+n, message.from_user.id)
 		for u in users:
 			ulist.append(pg.message(u))
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 		for f in ulist:
 			ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
+			for t in pg.tovars():
+				if t[1] in nlist:
+					await message.answer(text=f"{pg.username_export(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 		await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat)
@@ -232,6 +237,7 @@ async def filter(message: types.Message):
 		textt += ''.join(t for t in l if t.isalpha()) + ' '
 	seen = set()
 	uniq = list()
+	nlist = list()
 	for x in textt.split():
 		if x not in seen:
 			uniq.append(x)
@@ -241,19 +247,20 @@ async def filter(message: types.Message):
 		for r in ratio:
 			if r[1] > 92:
 				n += 1
-				print(pg.username_export(message.from_user.id), t.lower(), r[1])
+				pg.message_edit(pg.message(message.from_user.id)[1]+1, message.from_user.id)
+				nlist.append(int(pg.message(message.from_user.id)))
+				print(pg.username_export(message.from_user.id), t.lower())
 			else:
 				pass
 	if n == 0:
 		return 0
-	pg.message_edit(pg.message(message.from_user.id)[1]+n, message.from_user.id)
 	for u in users:
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
 		for t in pg.tovars():
-			if f[1] == t[1]:
+			if t[1] in nlist:
 				await message.answer(text=f"{pg.username_export(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 	await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
