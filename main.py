@@ -200,18 +200,19 @@ async def command_com(message: types.Message):
 			if x not in seen:
 				uniq.append(x)
 				seen.add(x)
+		oldm = pg.message(message.from_user.id)[1]
 		for t in uniq:
 			ratio = process.extract(t.lower(), BW)
 			for r in ratio:
 				if r[1] > 92:
 					n += 1
-					pg.message_edit(pg.message(message.from_user.id)[1]+1, message.from_user.id)
-					nlist.append(int(pg.message(message.from_user.id)))
+					nlist.append(old+1)
 					print(pg.username_export(message.from_user.id), t.lower())
 				else:
 					pass
 		if n == 0:
 			return 0
+		pg.message_edit(pg.message(message.from_user.id)[1]+n, message.from_user.id)
 		for u in users:
 			ulist.append(pg.message(u))
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
@@ -242,18 +243,19 @@ async def filter(message: types.Message):
 		if x not in seen:
 			uniq.append(x)
 			seen.add(x)
+	oldm = pg.message(message.from_user.id)[1]
 	for t in uniq:
 		ratio = process.extract(t.lower(), BW)
 		for r in ratio:
 			if r[1] > 92:
 				n += 1
-				pg.message_edit(pg.message(message.from_user.id)[1]+1, message.from_user.id)
-				nlist.append(int(pg.message(message.from_user.id)))
+				nlist.append(old+1)
 				print(pg.username_export(message.from_user.id), t.lower())
 			else:
 				pass
 	if n == 0:
 		return 0
+	pg.message_edit(pg.message(message.from_user.id)[1]+n, message.from_user.id)
 	for u in users:
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
