@@ -167,15 +167,18 @@ async def tovary(message: types.Message):
 	a = "<b>Грядущие задания:</b> \n\n"
 	tlist = sorted(pg.tovars(), key=lambda x: x[1])
 	for t in tlist:
-		a += f"{t[1]} — <code>{t[0]}</code>\n"
+		if pg.message(message.from_user.id)[1] > int(t[1]):
+			a += f"<s>{t[1]} — <code>{t[0]}</code></s>\n"
+		else:
+			a += f"{t[1]} — <code>{t[0]}</code>\n"
 	await message.answer(text=f"{pg.username_export(message.from_user.id)} {a}", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
 async def help_command(message: types.Message):
-	cmds = "!табло\n!плюс / !минус {количество}\n!добавить / !убрать <матслово>\n!количество\n!set / !unset <команда> {текст}\n!создать / !удалить <цена> <название>\n!задания\n!помощь"
+	cmds = "!табло\n!плюс / !минус {количество}\n!добавить / !убрать <матслово>\n!set / !unset <команда> {текст}\n!создать / !удалить <название> {цена} {описание}\n\nДопуступные всем:\n<code>!задания</code>\n<code>!количество</code>\n<code>!описание</code>\n<code>!помощь</code>"
 	for c in CL:
-		cmds += f"{c}\n"
-	await message.answer(text=f"{pg.username_export(message.from_user.id)}\n{cmds}")
+		cmds += f"\n<code>!{c}</code>"
+	await message.answer(text=f"{pg.username_export(message.from_user.id)}\n{cmds}", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.text[0] == '!' and (message.from_user.id in users or message.chat.id in chat))
 async def command_com(message: types.Message):
