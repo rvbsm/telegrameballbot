@@ -154,9 +154,17 @@ async def remove_tovar(message: types.Message):
 	pg.tovar_remove(text[1])
 	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
 
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["описание"], commands_prefix=['!'])
+async def description_tovar(message: types.Message):
+	tlist = sorted(pg.tovars(), key=lambda x: x[1])
+	text = "<b>Описание заданий:</b>\n\n"
+	for t in tlist:
+		text += f"{t[1]} <b>{t[0]}</b> — <i>{t[2]}</i>\n"
+	await message.answer(text=text, parse_mode="HTML")
+
 @dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat, commands=['задания', "квесты", "наказания"], commands_prefix=['!'])
 async def tovary(message: types.Message):
-	a = "<b>НАКАЗАНИЯ:</b> \n\n"
+	a = "<b>Грядущие задания:</b> \n\n"
 	tlist = sorted(pg.tovars(), key=lambda x: x[1])
 	for t in tlist:
 		a += f"{t[1]} — <code>{t[0]}</code>\n"
