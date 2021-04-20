@@ -126,6 +126,32 @@ async def remove_com(message: types.Message):
 	CL = pg.commands()
 	await message.answer(text=f"Убрана команда !{text[1]}")
 
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['товар'], commands_prefix=['!'])
+async def add_tovar(message: types.Message):
+	text = message.text.split()
+	if len(text) < 3:
+		return 0
+	textt = str()
+	for t in text[2:]:
+		textt += t + ' '
+	pg.tovar_import(textt.strip(), text[1])
+	await message.answer(text=f"Новый товар {textt}")
+
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=['удалить'], commands_prefix=['!'])
+async def remove_tovar(message: types.Message):
+	text = message.text.split()
+	if len(text) < 2:
+		return 0
+	textt = str()
+	for t in text[1:]:
+		textt += t + ' '
+	pg.tovar_remove(textt.strip())
+	await message.answer(text=f"Убран товар {textt}")
+
+@dp.message_handler(commands=['товары'], commands_prefix=['!'])
+async def tovary(message: types.Message):
+	await message.answer(text=pg.tovars(), parse_mode="HTML")
+
 @dp.message_handler(lambda message: message.text[0] == '!')
 async def command_com(message: types.Message):
 	command = message.text[1:].split()
@@ -133,13 +159,20 @@ async def command_com(message: types.Message):
 		text = pg.commands_text()[pg.commands().index(message.text[0])]
 		await message.answer(text=f"@{pg.username_export(message.from_user.id)} {text}")
 	else:
+		n = 0
 		ttable = table
 		text = message.text.split()
 		textt = str()
 		ulist = list()
 		for l in text:
 			textt += ''.join(t for t in l if t.isalpha()) + ' '
-		for t in textt.split():
+		seen = set()
+		uniq = list()
+		for x in textt.split():
+			if x not in seen:
+				uniq.append(x)
+				seen.add(x)
+		for t in uniq:
 			ratio = process.extract(t.lower(), BW)
 			for r in ratio:
 				if r[1] > 92:
@@ -156,20 +189,27 @@ async def command_com(message: types.Message):
 		for f in ulist:
 			ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
 		await bot.edit_message_text(chat_id=message.chat.id, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+
 @dp.message_handler()
 async def filter(message: types.Message):
 	if message.from_user.username == None:
 		pg.username_import(message.from_user.first_name, message.from_user.id)
 	else:
 		pg.username_import('@'+message.from_user.username, message.from_user.id)
-		n = 0
+	n = 0
 	ttable = table
 	text = message.text.split()
 	textt = str()
 	ulist = list()
 	for l in text:
 		textt += ''.join(t for t in l if t.isalpha()) + ' '
-	for t in textt.split():
+	seen = set()
+	uniq = list()
+	for x in textt.split():
+		if x not in seen:
+			uniq.append(x)
+			seen.add(x)
+	for t in uniq:
 		ratio = process.extract(t.lower(), BW)
 		for r in ratio:
 			if r[1] > 92:
@@ -200,12 +240,4 @@ if __name__ == "__main__":
 	logging.basicConfig(level=logging.INFO)
 	loop = asyncio.get_event_loop()
 	loop.create_task(db_update())
-	# executor.start_polling(dispatcher=dp, loop=loop)
-	start_webhook(
-		dispatcher=dp, 
-		loop=loop,
-		webhook_path=conf.WEBHOOK_PATH, 
-		skip_updates=True, 
-		host=conf.WEBAPP_HOST, 
-		port=conf.WEBAPP_PORT
-	)
+	executor.start_polling(dispatcher=dp, loop=loop)

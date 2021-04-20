@@ -33,7 +33,7 @@ class DataBase:
 		self.curpg.execute('''INSERT INTO "words" ("word") VALUES (%s)''', (word,))
 
 	def word_remove(self, word):
-		self.curp.execute('''DELETE FROM "words" WHERE "word" = %s''', (word,))
+		self.curpg.execute('''DELETE FROM "words" WHERE "word" = %s''', (word,))
 
 	def words(self):
 		self.curpg.execute('''SELECT * FROM "words"''')
@@ -58,3 +58,17 @@ class DataBase:
 
 	def command_remove(self, command):
 		self.curpg.execute('''DELETE FROM "commands" WHERE "command" = %s''', (command,))
+
+	def tovar_import(self, name, price):
+		self.curpg.execute('''INSERT INTO "shop" ("name", "price") VALUES (%s, %s)''', (name, price))
+
+	def tovar_remove(self, name):
+		self.curpg.execute('''DELETE FROM "shop" WHERE "name" = %s''', (name,))
+
+	def tovars(self):
+		self.curpg.execute('''SELECT * FROM "shop"''')
+		rows = self.curpg.fetchall()
+		a = "<b>НАКАЗАНИЯ:</b> \n\n"
+		for r in rows:
+			a += f"{r[0]} - {r[1]}\n"
+		return a
