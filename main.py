@@ -141,21 +141,18 @@ async def add_tovar(message: types.Message):
 	if len(text) < 3:
 		return 0
 	textt = str()
-	for t in text[2:]:
+	for t in text[3:]:
 		textt += t + ' '
-	pg.tovar_import(textt.strip(), text[1])
-	await message.answer(text=f"<b>🆕Новое задание:</b> «<code>{textt}</code>»", parse_mode="HTML")
+	pg.tovar_import(text[2], text[1], textt)
+	await message.answer(text=f"<b>🆕Новое задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["удалить"], commands_prefix=['!'])
 async def remove_tovar(message: types.Message):
 	text = message.text.split()
 	if len(text) < 2:
 		return 0
-	textt = str()
-	for t in text[1:]:
-		textt += t + ' '
-	pg.tovar_remove(textt.strip())
-	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{textt.strip()}</code>»", parse_mode="HTML")
+	pg.tovar_remove(text[1])
+	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat, commands=['задания', "квесты", "наказания"], commands_prefix=['!'])
 async def tovary(message: types.Message):
@@ -247,7 +244,7 @@ async def filter(message: types.Message):
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
 		for t in pg.tovars():
 			if f[1] == t[1]:
-				await message.answer(text=f"{pg.username_export(f[0])} Вам выпало задание «{t[0]}»")
+				await message.answer(text=f"{pg.username_export(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 	await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 @dp.message_handler()

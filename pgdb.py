@@ -59,8 +59,8 @@ class DataBase:
 	def command_remove(self, command):
 		self.curpg.execute('''DELETE FROM "commands" WHERE "command" = %s''', (command,))
 
-	def tovar_import(self, name, price):
-		self.curpg.execute('''INSERT INTO "shop" ("name", "price") VALUES (%s, %s)''', (name, price))
+	def tovar_import(self, name, price, desc):
+		self.curpg.execute('''INSERT INTO "shop" ("name", "price", "description") VALUES (%s, %s, %s)''', (name, price, desc))
 
 	def tovar_remove(self, name):
 		self.curpg.execute('''DELETE FROM "shop" WHERE "name" = %s''', (name,))
