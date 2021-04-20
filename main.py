@@ -143,7 +143,7 @@ async def add_tovar(message: types.Message):
 	textt = str()
 	for t in text[3:]:
 		textt += t + ' '
-	pg.tovar_import(text[2], text[1], textt)
+	pg.tovar_import(text[1], text[2], textt)
 	await message.answer(text=f"<b>🆕Новое задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["удалить"], commands_prefix=['!'])
