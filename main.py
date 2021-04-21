@@ -182,13 +182,17 @@ async def description_tovar(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["создатьивент"], commands_prefix=['!'])
 async def event_add(message: types.Message):
 	text = message.text.split()
-	pg.event_import(text[1])
+	for t in text[1:]:
+		textt += t + ' '
+	pg.event_import(textt.strip())
 	await message.answer(text=f"🆕<b>Создан новый ивент:</b>\n«<code>{text[1]}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["удалитьивент"], commands_prefix=['!'])
 async def event_remove(message: types.Message):
 	text = message.text.split()
-	pg.event_remove(text[1])
+	for t in text[1:]:
+		textt += t + ' '
+	pg.event_remove(textt.strip())
 	await message.answer(text=f"🆕<b>Удалён ивент:</b>\n«<code>{text[1]}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat, commands=["задания", "квесты", "наказания"], commands_prefix=['!'])
@@ -197,15 +201,18 @@ async def tovary(message: types.Message):
 	tlist = sorted(pg.tovars(), key=lambda x: x[1])
 	for t in tlist:
 		if pg.message(message.from_user.id)[1] > int(t[1]):
-			a += f"<s>{t[1]} — {t[0]}</s>\n"
+			pass
+		else:
+			a += f"{t[1]} — <code>{t[0]}</code>\n"
 	await message.answer(text=f"{pg.username_export(message.from_user.id)} {a}", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat, commands=["ивенты"], commands_prefix=['!'])
 async def events(message: types.Message):
 	text = "<b>Ивенты:</b>\n"
 	events = pg.events()
-	for e in events:
-		text += "\n<i>" + e + "</i>"
+	if events != None:
+		for e in events:
+			text += "\n<i>" + e + "</i>"
 	await message.answer(text=text, parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
@@ -268,8 +275,8 @@ async def filter(message: types.Message):
 					await bot.send_message(chat_id=chat[0], text=f"{pg.username_export(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 	await bot.edit_message_text(chat_id=chat[0], text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
-	if len(message) > 12:
-		ranlen = range(len(message))
+	if len(message.text) > 12:
+		ranlen = range(len(message.text))
 		ranch = choice(ranlen)
 		ranch2 = choice(ranlen)
 		if ranch < ranch2:
