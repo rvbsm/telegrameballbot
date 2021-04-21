@@ -69,3 +69,15 @@ class DataBase:
 		self.curpg.execute('''SELECT * FROM "shop"''')
 		rows = self.curpg.fetchall()
 		return rows
+
+	def event_import(self, name):
+		self.curpg.execute('''INSERT INTO "events" ("name") VALUES (%s)''', (name,))
+
+	def event_remove(self, name):
+		self.curpg.execute('''DELETE FROM "events" WHERE "name" = %s''', (name,))
+
+	def events(self):
+		self.curpg.execute('''SELECT "name" FROM "events"''')
+		rows = self.curpg.fetchall()
+		for r in rows:
+			return[r[0] for r in rows]
