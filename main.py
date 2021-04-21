@@ -206,7 +206,7 @@ async def command_com(message: types.Message):
 			for r in ratio:
 				if r[1] > 92:
 					n += 1
-					nlist.append(oldm+1)
+					nlist.append(oldm+n)
 					print(pg.username_export(message.from_user.id), t.lower())
 				else:
 					pass
@@ -249,7 +249,7 @@ async def filter(message: types.Message):
 		for r in ratio:
 			if r[1] > 92:
 				n += 1
-				nlist.append(oldm+1)
+				nlist.append(oldm+n)
 				print(pg.username_export(message.from_user.id), t.lower())
 			else:
 				pass
