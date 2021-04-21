@@ -2,7 +2,7 @@ from aiogram import Dispatcher, Bot, executor, types
 from aiogram.dispatcher.filters import IsReplyFilter
 from aiogram.utils.executor import start_webhook
 import asyncio, logging, psycopg2, os
-from random import choose, randint
+from random import choise, randint
 from fuzzywuzzy import process
 import conf
 from pgdb import DataBase
