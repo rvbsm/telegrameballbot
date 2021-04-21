@@ -42,9 +42,11 @@ async def table_com(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["плюс"], commands_prefix=['!'], is_reply=True)
 async def add_point(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	ttable = table
 	ulist = list()
+	ttable = table
 	text = message.text.split()
+	tovars = pg.tovars()
+	oldm = pg.message(200635302)[1] + 1
 	if len(text) > 1:
 		try:
 			n = int(text[1])
@@ -52,12 +54,16 @@ async def add_point(message: types.Message):
 			return 0
 	else:
 		n = 1
+	nlist = list(range(oldm, oldm+n))
 	pg.message_edit(pg.message(message.reply_to_message["from"]["id"])[1]+n, message.reply_to_message["from"]["id"])
 	for u in users:
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
+		for t in tovars:
+				if t[1] in nlist:
+					await message.answer(text=f"{pg.username_export(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 	await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["минус"], commands_prefix=['!'], is_reply=True)
@@ -185,29 +191,30 @@ async def command_com(message: types.Message):
 	if cmd[0] in CL:
 		text = pg.commands_text()[pg.commands().index(cmd[0])]
 		await message.answer(text=f"{pg.username_export(message.from_user.id)} {text}")
-	else:
+	"""else:
 		n = 0
-		ttable = table
-		text = message.text.split()
 		textt = str()
+		seen = set()
 		ulist = list()
 		nlist = list()
+		uniq = list()
+		ttable = table
+		text = message.text.split()
+		oldm = pg.message(message.from_user.id)[1]
+		tovars = pg.tovars()
 		for l in text:
 			textt += ''.join(t for t in l if t.isalpha()) + ' '
-		seen = set()
-		uniq = list()
 		for x in textt.split():
 			if x not in seen:
 				uniq.append(x)
 				seen.add(x)
-		oldm = pg.message(message.from_user.id)[1]
 		for t in uniq:
 			ratio = process.extract(t.lower(), BW)
 			for r in ratio:
 				if r[1] > 92:
 					n += 1
 					nlist.append(oldm+n)
-					print(pg.username_export(message.from_user.id), t.lower())
+					#print(pg.username_export(message.from_user.id), t.lower())
 				else:
 					pass
 		if n == 0:
@@ -218,10 +225,10 @@ async def command_com(message: types.Message):
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 		for f in ulist:
 			ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
-			for t in pg.tovars():
+			for t in tovars:
 				if t[1] in nlist:
 					await message.answer(text=f"{pg.username_export(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
-		await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+		await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")"""
 
 @dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat)
 async def filter(message: types.Message):
@@ -230,27 +237,28 @@ async def filter(message: types.Message):
 	else:
 		pg.username_import('@'+message.from_user.username, message.from_user.id)
 	n = 0
-	ttable = table
-	text = message.text.split()
 	textt = str()
-	ulist = list()
-	for l in text:
-		textt += ''.join(t for t in l if t.isalpha()) + ' '
 	seen = set()
+	ulist = list()
 	uniq = list()
 	nlist = list()
+	ttable = table
+	text = message.text.split()
+	oldm = pg.message(message.from_user.id)[1]
+	tovars = pg.tovars()
+	for l in text:
+		textt += ''.join(t for t in l if t.isalpha()) + ' '
 	for x in textt.split():
 		if x not in seen:
 			uniq.append(x)
 			seen.add(x)
-	oldm = pg.message(message.from_user.id)[1]
 	for t in uniq:
 		ratio = process.extract(t.lower(), BW)
 		for r in ratio:
 			if r[1] > 92:
 				n += 1
 				nlist.append(oldm+n)
-				print(pg.username_export(message.from_user.id), t.lower())
+				#print(pg.username_export(message.from_user.id), t.lower())
 			else:
 				pass
 	if n == 0:
@@ -261,14 +269,18 @@ async def filter(message: types.Message):
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		ttable += f"{pg.username_export(f[0])} — {f[1]}\n"
-		for t in pg.tovars():
+		for t in tovars:
 			if t[1] in nlist:
 				await message.answer(text=f"{pg.username_export(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 	await bot.edit_message_text(chat_id=-1001400136881, text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 @dp.message_handler()
 async def message(message: types.Message):
-	await message.answer(text="Свяжитесь с @rvbsm")
+	link_markup = types.inline_keyboard.InlineKeyboardMarkup(row_width=2)
+	author_button = types.inline_keyboard.InlineKeyboardButton(text="Связаться с автором", url="https://t.me/rvbsm")
+	# _button = types.inline_keyboard.InlineKeyboardButton(text="", url="")
+	link_markup.add(author_button)
+	await message.answer(text="<b>Полезные ссылки:</b>", parse_mode="HTML", reply_markup=link_markup)
 
 async def db_update():
 	await asyncio.sleep(240)
