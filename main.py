@@ -182,18 +182,28 @@ async def description_tovar(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["создатьивент"], commands_prefix=['!'])
 async def event_add(message: types.Message):
 	text = message.text.split()
+	textt = str()
+	events = pg.events()
+	if events == None:
+		events = list()
 	for t in text[1:]:
 		textt += t + ' '
-	pg.event_import(textt.strip())
-	await message.answer(text=f"🆕<b>Создан новый ивент:</b>\n«<code>{text[1]}</code>»", parse_mode="HTML")
+	if textt.strip() not in events:
+		pg.event_import(textt.strip())
+		await message.answer(text=f"🆕<b>Создан новый ивент:</b>\n«<code>{textt.strip()}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["удалитьивент"], commands_prefix=['!'])
 async def event_remove(message: types.Message):
 	text = message.text.split()
+	textt = str()
+	events = pg.events()
+	if events == None:
+		events = list()
 	for t in text[1:]:
 		textt += t + ' '
-	pg.event_remove(textt.strip())
-	await message.answer(text=f"🆕<b>Удалён ивент:</b>\n«<code>{text[1]}</code>»", parse_mode="HTML")
+	if textt.strip() in events:
+		pg.event_remove(textt.strip())
+		await message.answer(text=f"🆕<b>Удалён ивент:</b>\n«<code>{textt.strip()}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users or message.chat.id in chat, commands=["задания", "квесты", "наказания"], commands_prefix=['!'])
 async def tovary(message: types.Message):
