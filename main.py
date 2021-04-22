@@ -1,9 +1,10 @@
 from aiogram import Dispatcher, Bot, executor, types
 from aiogram.dispatcher.filters import IsReplyFilter
 from aiogram.utils.executor import start_webhook
-import asyncio, logging, psycopg2, os
+import asyncio, logging, os, codecs
 from random import choice, randint
 from fuzzywuzzy import process
+from datetime import datetime
 import conf
 from pgdb import DataBase
 
@@ -283,6 +284,8 @@ async def filter(message: types.Message):
 			if r[1] > 92:
 				n += 1
 				print("BANNED", t, '=', r[0], r[1])
+				with codecs.open("banned.txt", 'a', "utf-16") as ban:
+					ban.write(f"{datetime.now()} {t} '=' {r[0]} {r[1]}\n")
 				nlist.append(oldm+n)
 			else:
 				print(t, '=', r[0], r[1])
