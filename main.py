@@ -269,7 +269,7 @@ async def filter(message: types.Message):
 	ulist = nlist = uniq = list()
 	prnt = False
 	ttable = table
-	text = message.text.split()
+	text = message.text.lower().split()
 	oldm = pg.message(message.from_user.id)[1]
 	items = pg.items()
 	for l in text:
