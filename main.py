@@ -266,7 +266,9 @@ async def filter(message: types.Message):
 	n = 0
 	textt = str()
 	seen = set()
-	ulist = nlist = uniq = list()
+	ulist = list()
+	nlist = list()
+	uniq = list()
 	prnt = False
 	ttable = table
 	text = message.text.lower().split()
@@ -285,10 +287,16 @@ async def filter(message: types.Message):
 				n += 1
 				print("BANNED", t, '=', r[0], r[1])
 				with codecs.open("banned.txt", 'a', "utf-16") as ban:
-					ban.write(f"{datetime.now()} {t} '=' {r[0]} {r[1]}\n")
+					if len(t) < 4:
+						ttag = "\t"*4
+					elif len(t) < 8:
+						ttag = "\t"*3
+					elif len(t) < 12:
+						ttag = "\t"*2
+					else:
+						ttag = "\t"
+					ban.write(u"{0}\t{1}\t{5}\t{4}\t\t{2}{6}{3}\n".format(datetime.now(), message.message_id, t, r[0], r[1], message.from_user.id, ttag))
 				nlist.append(oldm+n)
-			else:
-				print(t, '=', r[0], r[1])
 	if n == 0:
 		return 0
 	pg.message_set(pg.message(message.from_user.id)[1]+n, message.from_user.id)
