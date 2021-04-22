@@ -280,12 +280,12 @@ async def filter(message: types.Message):
 	for t in uniq:
 		ratio = process.extract(t.lower(), BW)
 		for r in ratio:
-			print(t, '=', r[0], r[1])
 			if r[1] > 92:
 				n += 1
+				print("BANNED", t, '=', r[0], r[1])
 				nlist.append(oldm+n)
 			else:
-				pass
+				print(t, '=', r[0], r[1])
 	if n == 0:
 		return 0
 	pg.message_set(pg.message(message.from_user.id)[1]+n, message.from_user.id)
