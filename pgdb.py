@@ -1,45 +1,53 @@
 import psycopg2
 
+"""	with psycopg2.connect(self.url) as self.conpg:
+			self.conpg.autocommit = True
+			with self.conpg.cursor() as self.curpg:"""
+
 class DataBase:
-	def __init__(self):
-		self.dhost = "rvbsm-postgre.ct4bvuutiewe.eu-west-1.rds.amazonaws.com"
-		self.dname = "fivelyceumbot_postgre"
-		self.dusr = "master"
-		self.dpwd = "22rusbesm22"
-		self.dport = "5432"
-		self.conpg = psycopg2.connect(user=self.dusr, password=self.dpwd, host=self.dhost, port=self.dport, dbname=self.dname, sslrootcert="rds-combined-ca-bundle.pem", sslmode="verify-full")
+	def __init__(self, db: dict):
+		self.url = f"host={db['dbhost']} port={db['dbport']} dbname={db['dbname']} user={db['dbuser']} password={db['dbpass']} sslmode=verify-full sslrootcert=rds-combined-ca-bundle.pem"
+		self.conpg = psycopg2.connect(self.url)
 		self.conpg.autocommit = True
 		self.curpg = self.conpg.cursor()
 
-	def message(self, uid):
-		self.curpg.execute('''SELECT "user.id", "message.count" FROM "user" WHERE "user.id" = %s''', (uid,))
+
+	def message(self, user_id: int):
+		self.curpg.execute('''SELECT "user.id", "message.count" FROM "user" WHERE "user.id" = %s''', (user_id,))
 		res = self.curpg.fetchall()
 		for r in res:
 			return r[0], r[1]
-			
-	def message_edit(self, count, uid):
-		self.curpg.execute('''UPDATE "user" SET "message.count" = %s WHERE "user.id" = %s''', (count, uid))
 
-	def username_export(self, user_id: int):
+	def message_set(self, count: int, user_id: int):
+		self.curpg.execute('''UPDATE "user" SET "message.count" = %s WHERE "user.id" = %s''', (count, user_id))
+		return True
+
+
+	def username(self, user_id: int):
 		self.curpg.execute('''SELECT "name" FROM "user" WHERE "user.id" = %s''', (user_id,))
 		result = self.curpg.fetchall()
 		for i in result:
 			return i[0]
 
-	def username_import(self, username, user_id: int):
+	def username_set(self, username: str, user_id: int):
 		self.curpg.execute('''UPDATE "user" SET "name" = %s WHERE "user.id" = %s''', (username, user_id))
+		return True
 
-	def word_import(self, word):
-		self.curpg.execute('''INSERT INTO "words" ("word") VALUES (%s)''', (word,))
-
-	def word_remove(self, word):
-		self.curpg.execute('''DELETE FROM "words" WHERE "word" = %s''', (word,))
 
 	def words(self):
 		self.curpg.execute('''SELECT * FROM "words"''')
 		rows = self.curpg.fetchall()
 		for r in rows:
 			return[r[0] for r in rows]
+
+	def word_add(self, word: str):
+		self.curpg.execute('''INSERT INTO "words" ("word") VALUES (%s)''', (word,))
+		return True
+
+	def word_remove(self, word: str):
+		self.curpg.execute('''DELETE FROM "words" WHERE "word" = %s''', (word,))
+		return True
+
 
 	def commands(self):
 		self.curpg.execute('''SELECT "command" FROM "commands"''')
@@ -53,31 +61,39 @@ class DataBase:
 		for r in rows:
 			return[r[0] for r in rows]
 
-	def command_import(self, command, text: str):
+	def command_add(self, command: str, text: str):
 		self.curpg.execute('''INSERT INTO "commands" ("command", "text") VALUES (%s, %s)''', (command, text))
+		return True
 
-	def command_remove(self, command):
+	def command_remove(self, command: str):
 		self.curpg.execute('''DELETE FROM "commands" WHERE "command" = %s''', (command,))
+		return True
 
-	def tovar_import(self, name, price, desc):
-		self.curpg.execute('''INSERT INTO "shop" ("name", "price", "description") VALUES (%s, %s, %s)''', (name, price, desc))
 
-	def tovar_remove(self, name):
-		self.curpg.execute('''DELETE FROM "shop" WHERE "name" = %s''', (name,))
-
-	def tovars(self):
+	def items(self):
 		self.curpg.execute('''SELECT * FROM "shop"''')
 		rows = self.curpg.fetchall()
 		return rows
 
-	def event_import(self, name):
-		self.curpg.execute('''INSERT INTO "events" ("name") VALUES (%s)''', (name,))
+	def item_add(self, name: str, price: int, desc: str):
+		self.curpg.execute('''INSERT INTO "shop" ("name", "price", "description") VALUES (%s, %s, %s)''', (name, price, desc))
+		return True
 
-	def event_remove(self, name):
-		self.curpg.execute('''DELETE FROM "events" WHERE "name" = %s''', (name,))
+	def item_remove(self, name: str):
+		self.curpg.execute('''DELETE FROM "shop" WHERE "name" = %s''', (name,))
+		return True
+
 
 	def events(self):
 		self.curpg.execute('''SELECT "name" FROM "events"''')
 		rows = self.curpg.fetchall()
 		for r in rows:
 			return[r[0] for r in rows]
+
+	def event_add(self, name: str):
+		self.curpg.execute('''INSERT INTO "events" ("name") VALUES (%s)''', (name,))
+		return True
+
+	def event_remove(self, name: str):
+		self.curpg.execute('''DELETE FROM "events" WHERE "name" = %s''', (name,))
+		return True
