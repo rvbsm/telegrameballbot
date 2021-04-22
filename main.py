@@ -7,21 +7,18 @@ from fuzzywuzzy import process
 import conf
 from pgdb import DataBase
 
+YES_LIST = ["да, делай", "ДАВАЙ, ВПЕРЁЁД", "да🗿"]
+NO_LIST = ["больная что-ли? Нет, конечно", "я думаю нет", "нет🗿"]
+
 table = "<b>Е-БАЛЛЫ:</b>\n\n"
 cmd = """
-!табло	- отправить (запомнить, если ответ на сообщение бота) таблицу Е-Баллов
-!дать	/	!забрать	{количество}	- дать/забрать балл
-!добавить	/	!убрать	&lt;матслово&gt;
-!set	/	!unset	&lt;команда&gt;	{текст}	- добавить/убрать команду
-!создатьпредмет	/	!удалитьпредмет	&lt;название&gt;	{цена}	{описание}	- создание предмета
-!создатьивент	/	!удалитьивент	&lt;описание&gt;	- создание ивента
-!описание	- описание всех предметов
-
 Допуступные всем (*тык* for copy):
+<code>!set</code> &lt;слово-название&gt; &lt;описание&gt;
 <code>!помощь</code>	- это меню
 <code>!задания</code>	- мои задания
 <code>!количество</code>	- количество мата в БД
-<code>!ивенты</code>	- ивенты"""
+<code>!ивенты</code>	- ивенты
+<code>!даилинет</code> - Да или Нет?"""
 chat = [-1001400136881]
 users = [529598217, 932736973, 636619912, 555328241, 200635302]
 
@@ -129,7 +126,7 @@ async def remove_mat(message: types.Message):
 async def count_mat(message: types.Message):
 	await message.answer(text=f"{pg.username_export(message.from_user.id)} Количество мата в БД: {len(BW)}🙂")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["set"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
 async def add_com(message: types.Message):
 	text = message.text.split()
 	if len(text) < 3:
@@ -142,7 +139,7 @@ async def add_com(message: types.Message):
 	CL = pg.commands()
 	await message.answer(text=f"Добавлена команда <code>!{text[1]}</code>", parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["unset"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["unset"], commands_prefix=['!'])
 async def remove_com(message: types.Message):
 	text = message.text.split()
 	if len(text) < 2:
@@ -227,10 +224,19 @@ async def events(message: types.Message):
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
 async def help_command(message: types.Message):
+	cmds = cmd
 	for c in CL:
-		cmds = cmd
 		cmds += f"\n<code>!{c}</code>"
 	await message.answer(text=f"{pg.username_export(message.from_user.id)}\n{cmds}", parse_mode="HTML")
+
+@dp.message_handler(lambda message: message.from_user.id or message.chat.id in chat, commands=["даилинет"], commands_prefix=['!'])
+async def yesorno(message: types.Message):
+	ran = randint(1, 6)
+	if ran in (1, 3, 5):
+		text = choice(YES_LIST)
+	elif ran in (2, 4, 6):
+		text = choice(NO_LIST)
+	await message.answer(text=f"{pg.username_export(message.from_user.id)} {text}")
 
 @dp.message_handler(lambda message: message.text[0] == '!' and (message.from_user.id in users or message.chat.id in chat))
 async def command_com(message: types.Message):
