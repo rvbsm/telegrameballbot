@@ -280,10 +280,10 @@ async def filter(message: types.Message):
 	for t in uniq:
 		ratio = process.extract(t.lower(), BW)
 		for r in ratio:
+			print(message.from_user.first_name, r[0])
 			if r[1] > 92:
 				n += 1
 				nlist.append(oldm+n)
-				print(message.from_user.first_name, r[0])
 			else:
 				pass
 	if n == 0:
