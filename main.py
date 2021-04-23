@@ -250,6 +250,20 @@ async def chance_command(message: types.Message):
 	chance_text = f"{pg.username(message.from_user.id)} шанс того, что {text}{randint(0, 100)}%"
 	await message.answer(text=chance_text)
 
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["словарь"], commands_prefix=['!'])
+async def dictionary_command(message: types.Message):
+	try:
+		top = int(message.text.split()[1])
+	except:
+		top = 10
+	if top > 25:
+		return 0
+	dictl = sorted(pg.dictionary(), key=lambda x: x[1], reverse=True)
+	dictionary_text = f"<b>Топ-{top} слов:</b>"
+	for d in dictl[0:top]:
+		dictionary_text += f"\n{dictl.index(d)+1}. <i>{d[0]}</i> — {d[1]}"
+	await message.answer(text=dictionary_text, parse_mode="HTML")
+
 @dp.message_handler(lambda message: message.from_user.id in users and message.text[0] == '!')
 async def usercommands(message: types.Message):
 	cmd = message.text[1:].split()
@@ -264,19 +278,41 @@ async def filter(message: types.Message):
 	else:
 		pg.username_set('@'+message.from_user.username, message.from_user.id)
 	n = 0
-	textt = str()
+	textl = list()
 	seen = set()
 	ulist = list()
 	nlist = list()
 	uniq = list()
 	prnt = False
 	ttable = table
-	text = message.text.lower().split()
+	mtext = message.text.lower().split()
 	oldm = pg.message(message.from_user.id)[1]
 	items = pg.items()
-	for l in text:
-		textt += ''.join(t for t in l if t.isalpha()) + ' '
-	for x in textt.split():
+	for l in mtext:
+		textt = str()
+		seenl = str()
+		for t in l:
+			if t != seenl and t.isalpha():
+				textt += t
+			elif t == seenl:
+				pass
+			else:
+				textt += ' '
+			seenl = t
+		if len(textt.split()) > 1:
+			for t in textt.split():
+				textl.append(t)
+				if t not in pg.dictionary_words():
+					pg.dictionary_add(t, message.from_user.id)
+				elif t in pg.dictionary_words():
+					pg.dictionary_set(t, pg.dictionary_count(textt)+1)
+		else:
+			textl.append(textt)
+			if t not in pg.dictionary_words():
+				pg.dictionary_add(textt, message.from_user.id)
+			elif t in pg.dictionary_words():
+				pg.dictionary_set(textt, pg.dictionary_count(textt)+1)
+	for x in textl:
 		if x not in seen:
 			uniq.append(x)
 			seen.add(x)

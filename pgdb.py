@@ -97,3 +97,32 @@ class DataBase:
 	def event_remove(self, name: str):
 		self.curpg.execute('''DELETE FROM "events" WHERE "name" = %s''', (name,))
 		return True
+
+	def dictionary(self):
+		self.curpg.execute('''SELECT * FROM "dictionary"''')
+		rows = self.curpg.fetchall()
+		return rows
+
+	def dictionary_words(self):
+		self.curpg.execute('''SELECT "word" FROM "dictionary"''')
+		rows = self.curpg.fetchall()
+		for r in rows:
+			return[r[0] for r in rows]
+
+	def dictionary_count(self, word: str):
+		self.curpg.execute('''SELECT "count" FROM "dictionary"''')
+		result = self.curpg.fetchall()
+		for r in result:
+			return r[0]
+
+	def dictionary_add(self, word: str, author: int):
+		self.curpg.execute('''INSERT INTO "dictionary" ("word", "count", "author") VALUES (%s, 1, %s)''', (word, author))
+		return True
+
+	def dictionary_set(self, word: str, count: int):
+		self.curpg.execute('''UPDATE "dictionary" SET "count" = %s WHERE "word" = %s''', (count, word))
+		return True
+
+	def dictionary_remove(self, word: str):
+		self.curpg.execute('''DELETE FROM "dictionary" WHERE "word" = %s''', (word,))
+		return True
