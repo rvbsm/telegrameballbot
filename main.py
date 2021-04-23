@@ -340,7 +340,6 @@ async def db_update():
 		pg = DataBase(conf.DATABASE)
 		BW = pg.words()
 		CL = pg.commands()
-		logging.info("DB Updated")
 		await asyncio.sleep(240)
 
 if __name__ == "__main__":
