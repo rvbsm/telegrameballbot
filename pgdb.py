@@ -116,7 +116,8 @@ class DataBase:
 			return r[0]
 
 	def dictionary_add(self, word: str, author: int):
-		self.curpg.execute('''INSERT INTO "dictionary" ("word", "count", "author") VALUES (%s, 1, %s)''', (word, author))
+		if word != '':
+			self.curpg.execute('''INSERT INTO "dictionary" ("word", "count", "author") VALUES (%s, 1, %s)''', (word, author))
 		return True
 
 	def dictionary_set(self, word: str, count: int):

@@ -288,36 +288,40 @@ async def filter(message: types.Message):
 	mtext = message.text.lower().split()
 	oldm = pg.message(message.from_user.id)[1]
 	items = pg.items()
+	dw = pg.dictionary_words()
 	for l in mtext:
 		textt = str()
 		seenl = str()
 		for t in l:
 			if t != seenl and t.isalpha():
 				textt += t
-			elif t == seenl:
-				pass
 			else:
 				textt += ' '
-			seenl = t
 		if len(textt.split()) > 1:
 			for t in textt.split():
-				textl.append(t)
-				if t not in pg.dictionary_words():
-					pg.dictionary_add(t, message.from_user.id)
-				elif t in pg.dictionary_words():
-					pg.dictionary_set(t, pg.dictionary_count(textt)+1)
-		else:
+				if t != '':
+					textl.append(t)
+					if t not in dw:
+						pg.dictionary_add(t, message.from_user.id)
+					elif t in dw:
+						pg.dictionary_set(t, pg.dictionary_count(textt)+1)
+		elif textt != '':
 			textl.append(textt)
-			if t not in pg.dictionary_words():
+			if t not in dw:
 				pg.dictionary_add(textt, message.from_user.id)
-			elif t in pg.dictionary_words():
+			elif t in dw:
 				pg.dictionary_set(textt, pg.dictionary_count(textt)+1)
 	for x in textl:
 		if x not in seen:
 			uniq.append(x)
 			seen.add(x)
 	for t in uniq:
-		ratio = process.extract(t.lower(), BW)
+		b = str()
+		for w in t:
+			if w != seenl:
+				b += w
+			seenl = w
+		ratio = process.extract(b.lower(), BW)
 		for r in ratio:
 			if r[1] > 92:
 				n += 1
