@@ -319,7 +319,10 @@ async def filter(message: types.Message):
 		b = str()
 		for w in t:
 			if w != seenl:
-				b += w
+				if w != '':
+					b += w
+				else:
+					b = "None"
 			seenl = w
 		ratio = process.extract(b.lower(), BW)
 		for r in ratio:
