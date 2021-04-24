@@ -128,8 +128,8 @@ class DataBase:
 		self.curpg.execute('''DELETE FROM "dictionary" WHERE "word" = %s''', (word,))
 		return True
 
-	def logs(self, maxout: int):
-		self.curpg.execute('''SELECT * FROM "logs" LIMIT %s''', (maxout,))
+	def logs(self):
+		self.curpg.execute('''SELECT * FROM "logs"''', ())
 		rows = self.curpg.fetchall()
 		for r in rows:
 			return[r for r in rows]

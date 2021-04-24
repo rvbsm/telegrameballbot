@@ -157,11 +157,12 @@ async def logs_command(message: types.Message):
 		n = 25
 	if n > 50:
 		return 0
-	logs = pg.logs(n)
+	logs = sorted(pg.logs(), key=lambda x: x[3], reverse=True)
+
 	logs_text = f"<b>Последние {n} бан-вордов:</b>"
-	for l in pg.logs(n):
-		logs += f"\n<a href='t.me/c/1400136881/{l[2]}'>{l[0]} {l[1]} {pg.username(l[3])} — {l[5]}</a>"
-	await message.answer(text=logs, parse_mode="HTML")
+	for l in logs[0:n]:
+		logs_text += f"\n<a href='t.me/c/1400136881/{l[2]}'>{l[0]} {l[1]} {pg.username(l[3])} — {l[5]}</a>"
+	await message.answer(text=logs_text, parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["сообщение"], commands_prefix=['!'])
 async def message_command(message: types.Message):
