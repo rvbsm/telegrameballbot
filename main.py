@@ -131,7 +131,7 @@ async def item_add(message: types.Message):
 	for t in text[3:]:
 		textt += t + ' '
 	pg.item_add(text[1], text[2], textt)
-	await message.answer(text=f"<b>🆕Новое задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
+	await bot.send_message(chat_id=chat[0], text=f"<b>🆕Новое задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["удалитьпредмет"], commands_prefix=['!'])
 async def item_remove(message: types.Message):
@@ -149,6 +149,30 @@ async def items_description(message: types.Message):
 		text += f"{t[1]} <b>{t[0]}</b> — <i>{t[2]}</i>\n"
 	await message.answer(text=text, parse_mode="HTML")
 
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["логи"], commands_prefix=['!'])
+async def logs_command(message: types.Message):
+	try:
+		n = int(message.text.split()[1])
+	except:
+		n = 25
+	if n > 50:
+		return 0
+	logs = pg.logs(n)
+	logs_text = f"<b>Последние {n} бан-вордов:</b>"
+	for l in pg.logs(n):
+		logs += f"\n<a href='t.me/c/1400136881/{l[2]}'>{l[0]} {l[1]} {pg.username(l[3])} — {l[5]}</a>"
+	await message.answer(text=logs, parse_mode="HTML")
+
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["сообщение"], commands_prefix=['!'])
+async def message_command(message: types.Message):
+	text = message.text.split()[1:]
+	msg_text = str()
+	if len(text) < 1:
+		return
+	for t in text:
+		msg_text += f"{t} "
+	await bot.send_message(chat_id=chat[0], text=msg_text)
+
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
 async def usercommand_add(message: types.Message):
 	text = message.text.split()
@@ -160,7 +184,7 @@ async def usercommand_add(message: types.Message):
 	pg.command_add(text[1], textt)
 	global CL
 	CL = pg.commands()
-	await message.answer(text=f"Добавлена команда <code>!{text[1]}</code>", parse_mode="HTML")
+	await bot.send_message(chat_id=chat[0], text=f"🆕Новая команда <code>!{text[1]}</code>", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["unset"], commands_prefix=['!'])
 async def usercommand_remove(message: types.Message):
@@ -170,7 +194,7 @@ async def usercommand_remove(message: types.Message):
 	pg.command_remove(text[1])
 	global CL
 	CL = pg.commands()
-	await message.answer(text=f"Убрана команда <code>!{text[1]}</code>", parse_mode="HTML")
+	await bot.send_message(chat_id=chat[0], text=f"🗑Удалена команда <code>!{text[1]}</code>", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["количество"], commands_prefix=['!'])
 async def wb_count(message: types.Message):
@@ -269,7 +293,7 @@ async def usercommands(message: types.Message):
 	cmd = message.text[1:].split()
 	if cmd[0] in CL:
 		text = pg.commands_text()[pg.commands().index(cmd[0])]
-		await message.answer(text=f"{pg.username(message.from_user.id)} {text}", disable_web_page_preview=True)
+		await message.answer(text=f"{pg.username(message.from_user.id)} {text}", parse_mode="HTML", disable_web_page_preview=True)
 
 @dp.message_handler(lambda message: message.from_user.id in users)
 async def filter(message: types.Message):
@@ -293,24 +317,28 @@ async def filter(message: types.Message):
 		textt = str()
 		seenl = str()
 		for t in l:
-			if t != seenl and t.isalpha():
+			if t.isdigit():
+				pass
+			elif t != seenl and t.isalpha():
 				textt += t
 			else:
 				textt += ' '
-		if len(textt.split()) > 1:
-			for t in textt.split():
-				if t != '':
+		if len(textt.strip().split()) > 1:
+			for t in textt.strip().split():
+				if t.strip() != '':
 					textl.append(t)
-					if t not in dw:
-						pg.dictionary_add(t, message.from_user.id)
-					elif t in dw:
-						pg.dictionary_set(t, pg.dictionary_count(textt)+1)
-		elif textt != '':
-			textl.append(textt)
-			if t not in dw:
-				pg.dictionary_add(textt, message.from_user.id)
-			elif t in dw:
-				pg.dictionary_set(textt, pg.dictionary_count(textt)+1)
+				if t.strip() not in pg.dictionary_words():
+					pg.dictionary_add(t, message.from_user.id)
+				elif t.strip() in pg.dictionary_words():
+					pg.dictionary_set(t, pg.dictionary_count(t)+1)
+
+		else:
+			if textt.strip() != '':
+				textl.append(textt.strip())
+			if textt.strip() not in pg.dictionary_words():
+				pg.dictionary_add(textt.strip(), message.from_user.id)
+			elif textt.strip() in pg.dictionary_words():
+				pg.dictionary_set(textt.strip(), pg.dictionary_count(textt.strip())+1)
 	for x in textl:
 		if x not in seen:
 			uniq.append(x)
@@ -324,22 +352,13 @@ async def filter(message: types.Message):
 				else:
 					b = "None"
 			seenl = w
-		ratio = process.extract(b.lower(), BW)
-		for r in ratio:
-			if r[1] > 92:
-				n += 1
-				print("BANNED", t, '=', r[0], r[1])
-				with codecs.open("banned.txt", 'a', "utf-16") as ban:
-					if len(t) < 4:
-						ttag = "\t"*4
-					elif len(t) < 8:
-						ttag = "\t"*3
-					elif len(t) < 12:
-						ttag = "\t"*2
-					else:
-						ttag = "\t"
-					ban.write(u"{0}\t{1}\t{5}\t{4}\t\t{2}{6}{3}\n".format(datetime.now(), message.message_id, t, r[0], r[1], message.from_user.id, ttag))
-				nlist.append(oldm+n)
+			ratio = process.extract(b.lower(), BW)
+			for r in ratio:
+				if r[1] > 92:
+					n += 1
+					print("BANNED", t, '=', r[0], r[1])
+					pg.log_add(message.message_id, message.from_user.id, r[1], t, r[0])
+					nlist.append(oldm+n)
 	if n == 0:
 		return 0
 	pg.message_set(pg.message(message.from_user.id)[1]+n, message.from_user.id)
@@ -369,6 +388,84 @@ async def filter(message: types.Message):
 		text = choice(pg.events())
 		await bot.send_message(chat_id=chat[0], text=f"{pg.username(message.from_user.id)} <b>Вам выпал ивент:</b>\n\n{text}", parse_mode="HTML")
 
+@dp.edited_message_handler(lambda message: message.from_user.id in users)
+async def edited_message_filter(message: types.Message):
+	if message.from_user.username == None:
+		pg.username_set(message.from_user.first_name, message.from_user.id)
+	else:
+		pg.username_set('@'+message.from_user.username, message.from_user.id)
+	n = 0
+	textl = list()
+	seen = set()
+	ulist = list()
+	nlist = list()
+	uniq = list()
+	prnt = False
+	ttable = table
+	mtext = message.text.lower().split()
+	oldm = pg.message(message.from_user.id)[1]
+	items = pg.items()
+	dw = pg.dictionary_words()
+	for l in mtext:
+		textt = str()
+		seenl = str()
+		for t in l:
+			if t.isdigit():
+				pass
+			elif t != seenl and t.isalpha():
+				textt += t
+			else:
+				textt += ' '
+		if len(textt.strip().split()) > 1:
+			for t in textt.strip().split():
+				if t.strip() != '':
+					textl.append(t)
+				if t.strip() not in pg.dictionary_words():
+					pg.dictionary_add(t, message.from_user.id)
+				elif t.strip() in pg.dictionary_words():
+					pg.dictionary_set(t, pg.dictionary_count(t)+1)
+
+		else:
+			if textt.strip() != '':
+				textl.append(textt.strip())
+			if textt.strip() not in pg.dictionary_words():
+				pg.dictionary_add(textt.strip(), message.from_user.id)
+			elif textt.strip() in pg.dictionary_words():
+				pg.dictionary_set(textt.strip(), pg.dictionary_count(textt.strip())+1)
+	for x in textl:
+		if x not in seen:
+			uniq.append(x)
+			seen.add(x)
+	for t in uniq:
+		b = str()
+		for w in t:
+			if w != seenl:
+				if w != '':
+					b += w
+				else:
+					b = "None"
+			seenl = w
+		ratio = process.extract(b.lower(), BW)
+		for r in ratio:
+			if r[1] > 92:
+				n += 1
+				print("BANNED", t, '=', r[0], r[1])
+				pg.log_add(message.message_id, message.from_user.id, r[1], t, r[0])
+				nlist.append(oldm+n)
+	if n == 0:
+		return 0
+	pg.message_set(pg.message(message.from_user.id)[1]+n, message.from_user.id)
+	for u in users:
+		ulist.append(pg.message(u))
+	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
+	for f in ulist:
+		ttable += f"{pg.username(f[0])} — {f[1]}\n"
+		if message.from_user.id == f[0]:
+			for t in items:
+				if t[1] in nlist:
+					await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
+	await bot.edit_message_text(chat_id=chat[0], text=ttable, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+
 @dp.message_handler(lambda message: message.from_user.id not in users, content_types=types.message.ContentType.ANY)
 async def messages(message: types.Message):
 	link_markup = types.inline_keyboard.InlineKeyboardMarkup(row_width=2)
@@ -383,7 +480,7 @@ async def db_update():
 		pg = DataBase(conf.DATABASE)
 		BW = pg.words()
 		CL = pg.commands()
-		await asyncio.sleep(240)
+		await asyncio.sleep(180)
 
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.INFO)

@@ -110,7 +110,7 @@ class DataBase:
 			return[r[0] for r in rows]
 
 	def dictionary_count(self, word: str):
-		self.curpg.execute('''SELECT "count" FROM "dictionary"''')
+		self.curpg.execute('''SELECT "count" FROM "dictionary" WHERE "word" = %s''', (word,))
 		result = self.curpg.fetchall()
 		for r in result:
 			return r[0]
@@ -126,4 +126,14 @@ class DataBase:
 
 	def dictionary_remove(self, word: str):
 		self.curpg.execute('''DELETE FROM "dictionary" WHERE "word" = %s''', (word,))
+		return True
+
+	def logs(self, maxout: int):
+		self.curpg.execute('''SELECT * FROM "logs" LIMIT %s''', (maxout,))
+		rows = self.curpg.fetchall()
+		for r in rows:
+			return[r for r in rows]
+
+	def log_add(self, message_id: int, user_id: int, percentage: int, word: str, similar: str):
+		self.curpg.execute('''INSERT INTO "logs" ("date", "time", "message_id", "user.id", "percentage", "word", "similar") VALUES (CURRENT_DATE, LOCALTIME(0), %s, %s, %s, %s, %s)''', (message_id, user_id, percentage, word, similar))
 		return True
