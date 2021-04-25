@@ -60,7 +60,7 @@ async def point_add(message: types.Message):
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
-		ttable += f"{pg.username(f[0])} — {f[1]}\n"
+		table += f"{pg.username(f[0])} — {f[1]}\n"
 		if message.reply_to_message["from"]["id"] == f[0]:
 			for t in items:
 					if t[1] in nlist:
