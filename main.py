@@ -16,13 +16,19 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["табло"], commands_prefix=['!'], is_reply=True)
 async def table_command_reply(message: types.Message):
-	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	try:
+		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	except:
+		pass
 	if message.reply_to_message["from"]["is_bot"]:
 		pg.message_set(message.reply_to_message.message_id, 1708019201)
 
 @dp.message_handler(commands=["табло"], commands_prefix=['!'])
 async def table_command(message: types.Message):
-	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	try:
+		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	except:
+		pass
 	ulist = list()
 	table = txt.TABLE_MESSAGE
 	pg.message_set(message.message_id+1, 1708019201)
@@ -35,7 +41,10 @@ async def table_command(message: types.Message):
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["дать"], commands_prefix=['!'], is_reply=True)
 async def point_add(message: types.Message):
-	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	try:
+		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	except:
+		pass
 	ulist = list()
 	table = txt.TABLE_MESSAGE
 	mtext = message.text.split()
@@ -60,7 +69,10 @@ async def point_add(message: types.Message):
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["забрать"], commands_prefix=['!'], is_reply=True)
 async def point_remove(message: types.Message):
-	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	try:
+		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	except:
+		pass
 	ulist = list()
 	table = txt.TABLE_MESSAGE
 	mtext = message.text.split()
@@ -79,7 +91,10 @@ async def point_remove(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавить"], commands_prefix=['!'])
 async def wb_update_add(message: types.Message):
 	global BW
-	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	try:
+		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	except:
+		pass
 	if len(message.text.split()) < 2:
 		return 0
 	word = message.text.split()[1:]
@@ -96,7 +111,10 @@ async def wb_update_add(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["убрать"], commands_prefix=['!'])
 async def wb_update_remove(message: types.Message):
 	global BW
-	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	try:
+		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	except:
+		pass
 	if len(message.text.split()) < 2:
 		return 0
 	word = message.text.split()[1:]
