@@ -5,23 +5,9 @@ import asyncio, logging, os, codecs, re
 from random import choice, randint
 from fuzzywuzzy import process
 from datetime import datetime
+import message_texts as txt
 import conf
 from pgdb import DataBase
-
-YES_LIST = ["да, делай", "ДАВАЙ, ВПЕРЁЁД", "да🗿", "допустим да", "давай да", "да...?"]
-NO_LIST = ["больная что-ли? Нет, конечно", "я думаю нет", "нет🗿", "не, не надо", "ацтань, нет", "не нужно", "не", "прости, но нет"]
-
-table = "<b>Е-БАЛЛЫ:</b>\n\n"
-cmd = """<b>Допуступные всем (*тык* for copy):</b>
-<code>!set</code> &lt;команда&gt; &lt;текст при вызове команды&gt;
-<code>!шанс</code> &lt;событие&gt;
-<code>!помощь</code>
-<code>!задания</code>
-<code>!количество</code>
-<code>!ивенты</code>
-<code>!даилинет</code>
-
-<b>Пользовательские:</b>"""
 
 chat = [-1001400136881]
 users = [529598217, 932736973, 636619912, 555328241, 200635302]
@@ -37,29 +23,26 @@ async def table_command_reply(message: types.Message):
 @dp.message_handler(commands=["табло"], commands_prefix=['!'])
 async def table_command(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	ttable = table
 	ulist = list()
+	table = txt.TABLE_MESSAGE
 	pg.message_set(message.message_id+1, 1708019201)
 	for u in users:
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
-		ttable += f"{pg.username(f[0])} — {f[1]}\n"
-	await message.answer(text=ttable, parse_mode="HTML")
+		table += f"{pg.username(f[0])} — {f[1]}\n"
+	await message.answer(text=table, parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["дать"], commands_prefix=['!'], is_reply=True)
 async def point_add(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	ulist = list()
-	ttable = table
-	text = message.text.split()
+	table = txt.TABLE_MESSAGE
+	mtext = message.text.split()
 	items = pg.items()
 	oldm = pg.message(message.reply_to_message["from"]["id"])[1] + 1
-	if len(text) > 1:
-		try:
-			n = int(text[1])
-		except:
-			return 0
+	if len(mtext) > 1 and mtext[1].isdigit():
+		n = int(mtext[1])
 	else:
 		n = 1
 	nlist = list(range(oldm, oldm+n))
@@ -73,19 +56,16 @@ async def point_add(message: types.Message):
 			for t in items:
 					if t[1] in nlist:
 						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
-	await bot.edit_message_text(chat_id=chat[0], text=ttable, message_id=pg.message(1708019201)[1], parse_mode="HTML")
+	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["забрать"], commands_prefix=['!'], is_reply=True)
 async def point_remove(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	ttable = table
 	ulist = list()
-	text = message.text.split()
-	if len(text) > 1:
-		try:
-			n = int(text[1])
-		except:
-			return 0
+	table = txt.TABLE_MESSAGE
+	mtext = message.text.split()
+	if len(mtext) > 1 and mtext[1].isdigit():
+		n = int(mtext[1])
 	else:
 		n = 1
 	pg.message_set(pg.message(message.reply_to_message["from"]["id"])[1]-n, message.reply_to_message["from"]["id"])
@@ -93,8 +73,8 @@ async def point_remove(message: types.Message):
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
-		ttable += f"{pg.username(f[0])} — {f[1]}\n"
-	await bot.edit_message_text(chat_id=chat[0], text=ttable, message_id=pg.message(1708019201)[1], parse_mode="HTML")
+		table += f"{pg.username(f[0])} — {f[1]}\n"
+	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавить"], commands_prefix=['!'])
 async def wb_update_add(message: types.Message):
@@ -104,10 +84,14 @@ async def wb_update_add(message: types.Message):
 		return 0
 	word = message.text.split()[1:]
 	for w in word:
-		if w not in BW:
-			pg.word_add(w)
-			BW = pg.words()
-			await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Добавлено:\n" + w)
+		for l in w:
+			if w not in BW:
+				if not l.isalpha():
+					break
+				pg.word_add(w)
+				BW = pg.words()
+				await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Добавлено:\n" + w)
+				break
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["убрать"], commands_prefix=['!'])
 async def wb_update_remove(message: types.Message):
@@ -250,18 +234,18 @@ async def events_command(message: types.Message):
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
 async def help_command(message: types.Message):
-	cmds = cmd
+	cmd = txt.CMD_MESSAGE
 	for c in CL:
-		cmds += f"\n<code>!{c}</code>"
-	await message.answer(text=f"{pg.username(message.from_user.id)}\n{cmds}", parse_mode="HTML")
+		cmd += f"\n<code>!{c}</code>"
+	await message.answer(text=f"{pg.username(message.from_user.id)}\n{cmd}", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["даилинет"], commands_prefix=['!'])
 async def yesorno_command(message: types.Message):
 	ran = randint(1, 6)
 	if ran in (1, 3, 5):
-		text = choice(YES_LIST)
+		text = choice(txt.YES_LIST)
 	elif ran in (2, 4, 6):
-		text = choice(NO_LIST)
+		text = choice(txt.NO_LIST)
 	await message.answer(text=f"{pg.username(message.from_user.id)} {text}")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["шанс"], commands_prefix=['!'])
@@ -308,7 +292,7 @@ async def filter(message: types.Message):
 	outw = str()
 	outl = set()
 	prnt = False
-	ttable = table
+	table = txt.TABLE_MESSAGE
 	mtext = message.text.lower()
 	oldm = pg.message(message.from_user.id)[1]
 	text = " ".join(re.findall("[а-яА-ЯёЁa-zA-Z]+", mtext))
@@ -335,6 +319,7 @@ async def filter(message: types.Message):
 						n += 1
 						nlist.add(oldm+n)
 						pg.log_add(message.message_id, message.from_user.id, r[1], t, r[0])
+						break
 	except Exception as e:
 		pg.log_add(message.message_id, message.from_user.id, 0, e, str())
 	if n != 0:
@@ -343,7 +328,7 @@ async def filter(message: types.Message):
 			ulist.append(pg.message(u))
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 		for f in ulist:
-			ttable += f"{pg.username(f[0])} — {f[1]}\n"
+			table += f"{pg.username(f[0])} — {f[1]}\n"
 			if message.from_user.id == f[0]:
 				for t in items:
 					if t[1] in nlist:
@@ -377,8 +362,7 @@ async def edited_message_filter(message: types.Message):
 	nlist = set()
 	outw = str()
 	outl = set()
-	prnt = False
-	ttable = table
+	table = txt.TABLE_MESSAGE
 	mtext = message.text.lower()
 	oldm = pg.message(message.from_user.id)[1]
 	text = " ".join(re.findall("[а-яА-ЯёЁa-zA-Z]+", mtext))
@@ -405,6 +389,7 @@ async def edited_message_filter(message: types.Message):
 						n += 1
 						nlist.add(oldm+n)
 						pg.log_add(message.message_id, message.from_user.id, r[1], t, r[0])
+						break
 	except Exception as e:
 		pg.log_add(message.message_id, message.from_user.id, 0, e, str())
 	if n != 0:
@@ -413,7 +398,7 @@ async def edited_message_filter(message: types.Message):
 			ulist.append(pg.message(u))
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 		for f in ulist:
-			ttable += f"{pg.username(f[0])} — {f[1]}\n"
+			table += f"{pg.username(f[0])} — {f[1]}\n"
 			if message.from_user.id == f[0]:
 				for t in items:
 					if t[1] in nlist:
