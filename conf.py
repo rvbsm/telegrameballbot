@@ -9,7 +9,7 @@ DATABASE = {
 	'dbuser': 'master',
 	'dbpass': '22rusbesm22'
 }
-WEBHOOK_HOST = f'https://{APP_NAME}.herokuapp.com/' # Webhook hosting
+WEBHOOK_HOST = f'https://{APP_NAME}.herokuapp.com' # Webhook hosting
 WEBHOOK_PATH = f'/webhook/{API_TOKEN}' # Webhook path for bot (better is using API_TOKEN)
 WEBHOOK_URL = f'{WEBHOOK_HOST}{WEBHOOK_PATH}'
 WEBAPP_HOST = '0.0.0.0'
