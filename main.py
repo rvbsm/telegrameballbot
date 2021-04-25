@@ -374,39 +374,37 @@ async def edited_message_filter(message: types.Message):
 		pg.username_set('@'+message.from_user.username, message.from_user.id)
 	n = int()
 	ulist = list()
-	nlist = list()
+	nlist = set()
 	outw = str()
-	outl = list()
+	outl = set()
 	prnt = False
 	ttable = table
-	mtext = message.text.lower().split()
+	mtext = message.text.lower()
 	oldm = pg.message(message.from_user.id)[1]
 	text = " ".join(re.findall("[а-яА-ЯёЁa-zA-Z]+", mtext))
 	items = pg.items()
 	dw = pg.dictionary_words()
-	for w in text:
+	for w in text.split():
 		lastl = str()
 		outw = str()
 		for l in w:
 			if l != lastl:
 				outw += l
 				lastl = l
-			else:
-				print(w)
-				break
-		outl.append(outw)
+		outl.add(outw)
 	try:
 		for t in outl:
-			if t in dw:
-				pg.dictionary_set(t, pg.dictionary_count(t)+1)
-			elif t not in dw:
-				pg.dictionary_add(t, message.from_user.id)
-			ratio = process.extract(t, BW)
-			for r in ratio:
-				if r[1] > 93:
-					n += 1
-					nlist.add(oldm+n)
-					pg.log_add(message.message_id, message.from_user.id, r[1], t, r[0])
+			if t != None:
+				if t in dw:
+					pg.dictionary_set(t, pg.dictionary_count(t)+1)
+				elif t not in dw:
+					pg.dictionary_add(t, message.from_user.id)
+				ratio = process.extract(t, BW)
+				for r in ratio:
+					if r[1] > 93:
+						n += 1
+						nlist.add(oldm+n)
+						pg.log_add(message.message_id, message.from_user.id, r[1], t, r[0])
 	except Exception as e:
 		pg.log_add(message.message_id, message.from_user.id, 0, e, str())
 	if n != 0:
