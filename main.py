@@ -324,6 +324,7 @@ async def filter(message: types.Message):
 		pg.log_add(message.message_id, message.from_user.id, 0, e, str())
 	if n != 0:
 		pg.message_set(pg.message(message.from_user.id)[1]+n, message.from_user.id)
+		await asyncio.sleep(1)
 		for u in users:
 			ulist.append(pg.message(u))
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
@@ -333,8 +334,8 @@ async def filter(message: types.Message):
 				for t in items:
 					if t[1] in nlist:
 						pass
-						#await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
-		await bot.edit_message_text(chat_id=chat[0], text=f"{table}Восстаю из пепла...", message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
+		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 	# ~0,43% chance
 	ranlen = range(64)
@@ -349,7 +350,7 @@ async def filter(message: types.Message):
 	prnt = ran**2 == ranch**ranch2
 	if prnt == True:
 		text = choice(pg.events())
-		#await bot.send_message(chat_id=chat[0], text=f"{pg.username(message.from_user.id)} <b>Вам выпал ивент:</b>\n\n{text}", parse_mode="HTML")
+		await bot.send_message(chat_id=chat[0], text=f"{pg.username(message.from_user.id)} <b>Вам выпал ивент:</b>\n\n{text}", parse_mode="HTML")
 
 @dp.edited_message_handler(lambda message: message.from_user.id in users)
 async def edited_message_filter(message: types.Message):
@@ -393,6 +394,7 @@ async def edited_message_filter(message: types.Message):
 	except Exception as e:
 		pg.log_add(message.message_id, message.from_user.id, 0, e, str())
 	if n != 0:
+		await asyncio.sleep(1)
 		pg.message_set(pg.message(message.from_user.id)[1]+n, message.from_user.id)
 		for u in users:
 			ulist.append(pg.message(u))
@@ -403,8 +405,8 @@ async def edited_message_filter(message: types.Message):
 				for t in items:
 					if t[1] in nlist:
 						pass
-						#await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
-		await bot.edit_message_text(chat_id=chat[0], text=f"{table}Восстаю из пепла...", message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
+		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id not in users, content_types=types.message.ContentType.ANY)
 async def messages(message: types.Message):
