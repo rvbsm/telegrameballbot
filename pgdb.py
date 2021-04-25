@@ -106,6 +106,8 @@ class DataBase:
 	def dictionary_words(self):
 		self.curpg.execute('''SELECT "word" FROM "dictionary"''')
 		rows = self.curpg.fetchall()
+		if rows == list():
+			return rows
 		for r in rows:
 			return[r[0] for r in rows]
 
