@@ -454,7 +454,7 @@ if __name__ == "__main__":
 		loop=loop,
 		webhook_path=conf.WEBHOOK_PATH, 
 		skip_updates=True, 
-		on_startup=on_startup
+		on_startup=on_startup,
 		host=conf.WEBAPP_HOST, 
 		port=conf.WEBAPP_PORT
 	)
