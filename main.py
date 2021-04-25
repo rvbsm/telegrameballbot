@@ -309,9 +309,9 @@ async def filter(message: types.Message):
 	try:
 		for t in outl:
 			if t != None:
-				if t in dw:
+				if t in dw and len(t) > 1:
 					pg.dictionary_set(t, pg.dictionary_count(t)+1)
-				elif t not in dw:
+				elif t not in dw and len(t) > 1:
 					pg.dictionary_add(t, message.from_user.id)
 				ratio = process.extract(t, BW)
 				for r in ratio:
@@ -380,9 +380,9 @@ async def edited_message_filter(message: types.Message):
 	try:
 		for t in outl:
 			if t != None:
-				if t in dw:
+				if t in dw and len(t) > 1:
 					pg.dictionary_set(t, pg.dictionary_count(t)+1)
-				elif t not in dw:
+				elif t not in dw and len(t) > 1:
 					pg.dictionary_add(t, message.from_user.id)
 				ratio = process.extract(t, BW)
 				for r in ratio:
