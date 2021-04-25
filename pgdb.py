@@ -133,6 +133,8 @@ class DataBase:
 	def logs(self):
 		self.curpg.execute('''SELECT * FROM "logs"''', ())
 		rows = self.curpg.fetchall()
+		if rows == list():
+			return rows
 		for r in rows:
 			return[r for r in rows]
 
