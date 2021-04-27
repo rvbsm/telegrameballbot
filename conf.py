@@ -5,7 +5,7 @@ API_TOKEN = "1708019201:AAEMfsUPDVNNbgsRP4rA-7jgVKOMk0c65xQ"
 APP_NAME = "telegrameballbot"
 scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
 creds = ServiceAccountCredentials.from_json_keyfile_name('telegrameballbot.json', scope)
-GSHEETNAME = "ахуй😳🤩🐀 copy"
+GSHEETNAME = "ахуй😳🤩🐀"
 DATABASE = {
 	'dbhost': 'rvbsm-postgre.ct4bvuutiewe.eu-west-1.rds.amazonaws.com',
 	'dbport': 5432,

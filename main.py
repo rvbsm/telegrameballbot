@@ -296,7 +296,7 @@ async def dictionary_command(message: types.Message):
 	await message.answer(text=dictionary_text, parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["смотрим"], commands_prefix=['!'])
-async def watchlist_command(messge: types.Message):
+async def watchlist_command(message: types.Message):
 	film = list()
 	req = sheet_instance.get_all_records()
 	for r in req[5:]:
