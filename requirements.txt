@@ -2,3 +2,5 @@ aiogram
 psycopg2
 fuzzywuzzy
 python-Levenshtein
+oauth2client
+gspread
