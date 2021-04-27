@@ -4,3 +4,4 @@ fuzzywuzzy
 python-Levenshtein
 oauth2client
 gspread
+google-api-python-client
