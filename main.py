@@ -1,16 +1,21 @@
 from aiogram import Dispatcher, Bot, executor, types
 from aiogram.dispatcher.filters import IsReplyFilter
 from aiogram.utils.executor import start_webhook
-import asyncio, logging, os, codecs, re
+from pgdb import DataBase
 from random import choice, randint
 from fuzzywuzzy import process
 from datetime import datetime
+from oauth2client.service_account import ServiceAccountCredentials
+import asyncio, logging, os, codecs, re, gspread
 import message_texts as txt
 import conf
-from pgdb import DataBase
 
 chat = [-1001400136881]
 users = [529598217, 932736973, 636619912, 555328241, 200635302]
+
+client = gspread.authorize(conf.creds)
+sheet = client.open(conf.GSHEETNAME)
+sheet_instance = sheet.get_worksheet(0)
 bot = Bot(token=conf.API_TOKEN)
 dp = Dispatcher(bot)
 
@@ -290,6 +295,15 @@ async def dictionary_command(message: types.Message):
 	for d in dictl[0:top]:
 		dictionary_text += f"\n{dictl.index(d)+1}. <i>{d[0]}</i> — {d[1]}"
 	await message.answer(text=dictionary_text, parse_mode="HTML")
+
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["смотрим"], commands_prefix=['!'])
+async def watchlist_command(messge: types.Message):
+	film = list()
+	req = sheet_instance.get_all_records()
+	for r in req[5:]:
+		if r['status'] != "yep":
+			film.append(f"{r['name']} (КП: {r['kp']})")
+	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True)
 
 @dp.message_handler(lambda message: message.from_user.id in users and message.text[0] == '!')
 async def usercommands(message: types.Message):

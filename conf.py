@@ -2,6 +2,9 @@ import os
 
 API_TOKEN = "1708019201:AAEMfsUPDVNNbgsRP4rA-7jgVKOMk0c65xQ"
 APP_NAME = "telegrameballbot"
+scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_name('telegrameballbot.json', scope)
+GSHEETNAME = "ахуй😳🤩🐀 copy"
 DATABASE = {
 	'dbhost': 'rvbsm-postgre.ct4bvuutiewe.eu-west-1.rds.amazonaws.com',
 	'dbport': 5432,
@@ -14,3 +17,4 @@ WEBHOOK_PATH = f'/webhook/{API_TOKEN}' # Webhook path for bot (better is using A
 WEBHOOK_URL = f'{WEBHOOK_HOST}{WEBHOOK_PATH}'
 WEBAPP_HOST = '0.0.0.0'
 WEBAPP_PORT = os.getenv("PORT")
+
