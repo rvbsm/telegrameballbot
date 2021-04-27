@@ -302,7 +302,7 @@ async def watchlist_command(message: types.Message):
 	for r in req[5:]:
 		if r['status'] != "yep":
 			film.append(f"{r['name']} (КП: {r['kp']})")
-	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True)
+	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False)
 
 @dp.message_handler(lambda message: message.from_user.id in users and message.text[0] == '!')
 async def usercommands(message: types.Message):
