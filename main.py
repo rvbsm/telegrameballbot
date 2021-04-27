@@ -5,7 +5,6 @@ from pgdb import DataBase
 from random import choice, randint
 from fuzzywuzzy import process
 from datetime import datetime
-from oauth2client.service_account import ServiceAccountCredentials
 import asyncio, logging, os, codecs, re, gspread
 import message_texts as txt
 import conf

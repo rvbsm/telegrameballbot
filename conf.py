@@ -1,4 +1,5 @@
 import os
+from oauth2client.service_account import ServiceAccountCredentials
 
 API_TOKEN = "1708019201:AAEMfsUPDVNNbgsRP4rA-7jgVKOMk0c65xQ"
 APP_NAME = "telegrameballbot"
