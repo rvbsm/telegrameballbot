@@ -159,7 +159,7 @@ async def logs_command(message: types.Message):
 		n = 25
 	if n > 50:
 		return 0
-	logs = sorted(pg.logs(), key=lambda x: x[3], reverse=True)
+	logs = sorted(pg.logs(), key=lambda x: x[2], reverse=True)
 
 	logs_text = f"<b>Последние {n} бан-вордов:</b>"
 	for l in logs[0:n]:
