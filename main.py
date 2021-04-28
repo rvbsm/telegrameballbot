@@ -359,7 +359,7 @@ async def filter(message: types.Message):
 	try:
 		for t in outl:
 			if t in txt.BOT_LIST:
-				await message.answer_video(video=f"{randint(1, 3)}.gif", caption="ни грути. цём")
+				await message.answer_video(video=f"gif/{randint(1, 3)}.gif", caption="ни грути. цём")
 			if t != None:
 				if t in dw and len(t) > 1:
 					pg.dictionary_set(t, pg.dictionary_count(t)+1)
@@ -373,7 +373,7 @@ async def filter(message: types.Message):
 						pg.log_add(message.message_id, message.from_user.id, r[1], t, r[0])
 						break
 	except Exception as e:
-		pg.log_add(message.message_id, message.from_user.id, 0, e, str())
+		pg.log_add(message.message_id, message.from_user.id, 0, str(e), str(e))
 	if n != 0:
 		pg.message_set(pg.message(message.from_user.id)[1]+n, message.from_user.id)
 		await asyncio.sleep(1)
