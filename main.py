@@ -92,7 +92,7 @@ async def point_remove(message: types.Message):
 		table += f"{pg.username(f[0])} — {f[1]}\n"
 	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавить"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавитьмат"], commands_prefix=['!'])
 async def wb_update_add(message: types.Message):
 	global BW
 	try:
@@ -112,7 +112,7 @@ async def wb_update_add(message: types.Message):
 				await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Добавлено:\n" + w)
 				break
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["убрать"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["убратьмат"], commands_prefix=['!'])
 async def wb_update_remove(message: types.Message):
 	global BW
 	try:
@@ -128,7 +128,7 @@ async def wb_update_remove(message: types.Message):
 			BW = pg.words()
 			await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Убрано:\n" + w)
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["создатьпредмет"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавитьпредмет"], commands_prefix=['!'])
 async def item_add(message: types.Message):
 	text = message.text.split()
 	if len(text) < 3:
@@ -139,7 +139,7 @@ async def item_add(message: types.Message):
 	pg.item_add(text[1], text[2], textt)
 	await bot.send_message(chat_id=chat[0], text=f"<b>🆕Новое задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["удалитьпредмет"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["убратьпредмет"], commands_prefix=['!'])
 async def item_remove(message: types.Message):
 	text = message.text.split()
 	if len(text) < 2:
@@ -171,7 +171,7 @@ async def logs_command(message: types.Message):
 	await message.answer(text=logs_text, parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id == users[4], commands=["сообщение"], commands_prefix=['!'])
-async def message_command(message: types.Message):
+async def sendmessage_command(message: types.Message):
 	text = message.text.split()[1:]
 	msg_text = str()
 	if len(text) < 1:
@@ -179,6 +179,25 @@ async def message_command(message: types.Message):
 	for t in text:
 		msg_text += f"{t} "
 	await bot.send_message(chat_id=chat[0], text=msg_text)
+
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавитьфильм"], commands_prefix=['!'])
+async def film_add(message: types.Message):
+	name = str()
+	mtext = message.text.split()[1:]
+	row = sheet_instance.row_count
+	kp_link = mtext[0]
+	kp = mtext[1]
+	for w in mtext[2:]:
+		name += w + " "
+	sheet_instance.insert_row(index=row, values=['badyep', name.strip(), kp])
+	sheet_instance.update(f'C{row}', f'=HYPERLINK("{kp_link}", {kp})', raw=False)
+	sheet_instance.update(f'D{row}', f'=IFERROR(ROUND(AVERAGE(G{row}:K{row}), 1), "—")', raw=False)
+	await message.answer(text=f"Добавлен новый фильм в таблицу: {name}")
+
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["админкоманды", "админпомощь"], commands_prefix=['!'])
+async def admin_help_command(message: types.Message):
+	cmd = txt.CMD_ADMIN_MESSAGE
+	await message.answer(text=f"{pg.username(message.from_user.id)} Админ команды:{cmd}", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
 async def usercommand_add(message: types.Message):
@@ -208,7 +227,7 @@ async def wb_count(message: types.Message):
 	text = f"{pg.username(message.from_user.id)} Количество мата в БД: {len(BW)}🙂"
 	await message.answer(text=text)
 
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["создатьивент"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["добавитьивент"], commands_prefix=['!'])
 async def event_add(message: types.Message):
 	text = message.text.split()
 	textt = str()
@@ -221,7 +240,7 @@ async def event_add(message: types.Message):
 		pg.event_add(textt.strip())
 		await message.answer(text=f"🆕<b>Создан новый ивент:</b>\n«<code>{textt.strip()}</code>»", parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["удалитьивент"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["убратьивент"], commands_prefix=['!'])
 async def event_remove(message: types.Message):
 	text = message.text.split()
 	textt = str()
@@ -259,7 +278,7 @@ async def help_command(message: types.Message):
 	cmd = txt.CMD_MESSAGE
 	for c in CL:
 		cmd += f"\n<code>!{c}</code>"
-	await message.answer(text=f"{pg.username(message.from_user.id)}\n{cmd}", parse_mode="HTML")
+	await message.answer(text=f"{pg.username(message.from_user.id)}{cmd}", parse_mode="HTML")
 
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["даилинет"], commands_prefix=['!'])
 async def yesorno_command(message: types.Message):
@@ -299,7 +318,7 @@ async def dictionary_command(message: types.Message):
 async def watchlist_command(message: types.Message):
 	film = list()
 	req = sheet_instance.get_all_records()
-	for r in req[5:]:
+	for r in req:
 		if r['status'] == "badyep":
 			film.append(f"{r['name']} (КП: {r['kp']})")
 	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False)
@@ -339,6 +358,8 @@ async def filter(message: types.Message):
 		outl.add(outw)
 	try:
 		for t in outl:
+			if t in txt.BOT_LIST:
+				await message.answer_video(video=f"{randint(1, 3)}.gif", caption="ни грути. цём")
 			if t != None:
 				if t in dw and len(t) > 1:
 					pg.dictionary_set(t, pg.dictionary_count(t)+1)

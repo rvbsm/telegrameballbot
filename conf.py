@@ -18,4 +18,3 @@ WEBHOOK_PATH = f'/webhook/{API_TOKEN}' # Webhook path for bot (better is using A
 WEBHOOK_URL = f'{WEBHOOK_HOST}{WEBHOOK_PATH}'
 WEBAPP_HOST = '0.0.0.0'
 WEBAPP_PORT = os.getenv("PORT")
-
