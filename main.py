@@ -300,7 +300,7 @@ async def watchlist_command(message: types.Message):
 	film = list()
 	req = sheet_instance.get_all_records()
 	for r in req[5:]:
-		if r['status'] != "yep":
+		if r['status'] == "badyep":
 			film.append(f"{r['name']} (КП: {r['kp']})")
 	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False)
 
@@ -368,8 +368,8 @@ async def filter(message: types.Message):
 						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
-	# ~0,43% chance
-	ranlen = range(64)
+	# ~0,13% chance
+	ranlen = range(128)
 	ranch = choice(ranlen)
 	ranch2 = choice(ranlen)
 	if ranch < ranch2:
