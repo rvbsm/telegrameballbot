@@ -358,6 +358,7 @@ async def filter(message: types.Message):
 		outl.add(outw)
 	try:
 		for t in outl:
+			print(t)
 			if t in txt.BOT_LIST:
 				await message.answer_video(video=f"gif/{randint(1, 3)}.gif", caption="ни грути. цём")
 			if t != None:
