@@ -238,10 +238,8 @@ async def rate_command(message: types.Message):
 		name += m + " "
 	name = name.strip()
 	ratio = fpc.extract(name, film)
-	print(ratio)
 	for r in ratio:
 		if r[1] > 90:
-			print(r[0])
 			name = r[0]
 			break
 	try:
@@ -391,10 +389,8 @@ async def rate_command(message: types.Message):
 		name += m + " "
 	name = name.strip()
 	ratio = fpc.extract(name, film)
-	print(ratio)
 	for r in ratio:
 		if r[1] > 90:
-			print(r[0])
 			name = r[0]
 			break
 	try:
@@ -439,7 +435,6 @@ async def filter(message: types.Message):
 		outl.add(outw)
 	try:
 		for t in outl:
-			print(t)
 			if t in txt.BOT_LIST:
 				with open(f"gif/{randint(1, 3)}.gif", "rb") as gif:
 					await message.answer_video(gif, caption="ни грути. цём")
@@ -546,7 +541,7 @@ async def edited_message_filter(message: types.Message):
 
 @dp.message_handler(lambda message: message.from_user.id not in users, content_types=types.message.ContentType.ANY)
 async def messages(message: types.Message):
-	print(message.from_user.id)
+	await bot.send_message(chat_id=users[4], text=message.from_user.id)
 	link_markup = types.inline_keyboard.InlineKeyboardMarkup(row_width=2)
 	author_button = types.inline_keyboard.InlineKeyboardButton(text="Связаться с автором", url="https://t.me/rvbsm")
 	# _button = types.inline_keyboard.InlineKeyboardButton(text="", url="")
