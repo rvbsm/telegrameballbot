@@ -199,6 +199,58 @@ async def admin_help_command(message: types.Message):
 	cmd = txt.CMD_ADMIN_MESSAGE
 	await message.answer(text=f"{pg.username(message.from_user.id)} Админ команды:{cmd}", parse_mode="HTML")
 
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["просмотрено"], commands_prefix=['!'])
+async def watched_command(message: types.Message):
+	film = list()
+	name = str()
+	req = sheet_instance.get_all_records()
+	for r in req[5:]:
+		if r['status'] != "yep":
+			film.append(r["name"])
+	message = message.text.split()
+	for m in message[1:]:
+		name += m + " "
+	name = name.strip()
+	ratio = fpc.extract(name, film)
+	for r in ratio:
+		if r[1] > 90:
+			name = r[0]
+			break
+	try:
+		frow = sheet_instance.find(query=name, in_column=2).row
+		sheet_instance.update(f"A{frow}", "yep")
+	except gspread.exceptions.CellNotFound as e:
+		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+
+@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["оценка"], commands_prefix=['!'], is_reply=True)
+async def rate_command(message: types.Message):
+	film = list()
+	name = str()
+	req = sheet_instance.get_all_records()
+	for r in req[5:]:
+		if r['status'] != "yep":
+			film.append(r["name"])
+	user_id = message.reply_to_message["from"]["id"]
+	message = message.text.split()
+	urate = message[1]
+	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
+	for m in message[2:]:
+		name += m + " "
+	name = name.strip()
+	ratio = fpc.extract(name, film)
+	print(ratio)
+	for r in ratio:
+		if r[1] > 90:
+			print(r[0])
+			name = r[0]
+			break
+	try:
+		frow = sheet_instance.find(query=name, in_column=2).row
+		sheet_instance.update_cell(row=frow, col=ucol, value=urate)
+		await message.answer(f"Поставлена оценка {urate} фильму {name} от {pg.username(user_id)}")
+	except gspread.exceptions.CellNotFound as e:
+		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
 async def usercommand_add(message: types.Message):
 	text = message.text.split()
@@ -323,6 +375,35 @@ async def watchlist_command(message: types.Message):
 			film.append(f"{r['name']} (КП: {r['kp']})")
 	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False)
 
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["оценка"], commands_prefix=['!'])
+async def rate_command(message: types.Message):
+	film = list()
+	name = str()
+	req = sheet_instance.get_all_records()
+	for r in req[5:]:
+		if r['status'] != "yep":
+			film.append(r["name"])
+	user_id = message.from_user.id
+	message = message.text.split()
+	urate = message[1]
+	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
+	for m in message[2:]:
+		name += m + " "
+	name = name.strip()
+	ratio = fpc.extract(name, film)
+	print(ratio)
+	for r in ratio:
+		if r[1] > 90:
+			print(r[0])
+			name = r[0]
+			break
+	try:
+		frow = sheet_instance.find(query=name, in_column=2).row
+		sheet_instance.update_cell(row=frow, col=ucol, value=urate)
+		await message.answer(f"Поставлена оценка {urate} фильму {name} от {pg.username(user_id)}")
+	except gspread.exceptions.CellNotFound as e:
+		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+
 @dp.message_handler(lambda message: message.from_user.id in users and message.text[0] == '!')
 async def usercommands(message: types.Message):
 	cmd = message.text[1:].split()
@@ -360,7 +441,9 @@ async def filter(message: types.Message):
 		for t in outl:
 			print(t)
 			if t in txt.BOT_LIST:
-				await message.answer_video(video=f"gif/{randint(1, 3)}.gif", caption="ни грути. цём")
+				with open(f"gif/{randint(1, 3)}.gif", "rb") as gif:
+					await message.answer_video(gif, caption="ни грути. цём")
+					gif.close()
 			if t != None:
 				if t in dw and len(t) > 1:
 					pg.dictionary_set(t, pg.dictionary_count(t)+1)
