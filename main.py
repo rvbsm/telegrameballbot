@@ -279,7 +279,7 @@ async def rate_command(message: types.Message):
 	except gspread.exceptions.CellNotFound as e:
 		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
-@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["админ"], commands_prefix=['!'])
+"""@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["админ"], commands_prefix=['!'])
 async def promote_command(message: types.Message):
 	await bot.promote_chat_member(
 		chat_id=chat[0], 
@@ -295,7 +295,7 @@ async def promote_command(message: types.Message):
 	await bot.set_chat_administrator_custom_title(
 		chat_id=chat[0], 
 		user_id=message.from_user.id, 
-		custom_title=message.get_args())
+		custom_title=message.get_args())"""
 
 # Add user-command
 # !set привет Привет, человек
