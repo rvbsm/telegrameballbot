@@ -211,7 +211,7 @@ async def watched_command(message: types.Message):
 	for m in message[1:]:
 		name += m + " "
 	name = name.strip()
-	ratio = fpc.extract(name, film)
+	ratio = process.extract(name, film)
 	for r in ratio:
 		if r[1] > 90:
 			name = r[0]
@@ -237,7 +237,7 @@ async def rate_command(message: types.Message):
 	for m in message[2:]:
 		name += m + " "
 	name = name.strip()
-	ratio = fpc.extract(name, film)
+	ratio = process.extract(name, film)
 	for r in ratio:
 		if r[1] > 90:
 			name = r[0]
@@ -388,7 +388,7 @@ async def rate_command(message: types.Message):
 	for m in message[2:]:
 		name += m + " "
 	name = name.strip()
-	ratio = fpc.extract(name, film)
+	ratio = process.extract(name, film)
 	for r in ratio:
 		if r[1] > 90:
 			name = r[0]
