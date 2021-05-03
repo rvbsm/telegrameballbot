@@ -458,7 +458,7 @@ async def rate_command(message: types.Message):
 
 # Self mute
 # !табуретка 10000
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["123"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["табуретка"], commands_prefix=['!'])
 async def selfmute_command(message: types.Message):
 	now = int(datetime.now().timestamp())
 	if message.text.split() > 1 and int(message.text.split()[1]).isdigit():
@@ -631,6 +631,7 @@ async def db_update():
 
 # Set vars
 async def on_startup(dp):
+	global chat, users, admin_users
 	chat = [-1001400136881]
 	users = [529598217, 932736973, 636619912, 555328241, 200635302]
 	admin_users = await bot.get_chat_administrators(chat[0])
