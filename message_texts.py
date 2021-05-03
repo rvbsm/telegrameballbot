@@ -12,6 +12,7 @@ CMD_MESSAGE = """
 <code>!ивенты</code>
 <code>!даилинет</code>
 <code>!оценка</code> &lt;оценка&gt; &lt;фильм&gt;
+
 <b>Пользовательские:</b>"""
 
 CMD_ADMIN_MESSAGE = """

@@ -1,32 +1,36 @@
-from aiogram import Dispatcher, Bot, executor, types
-from aiogram.dispatcher.filters import IsReplyFilter
-from aiogram.utils.executor import start_webhook
-from pgdb import DataBase
-from random import choice, randint
-from fuzzywuzzy import process
-from datetime import datetime
-import asyncio, logging, os, codecs, re, gspread
-import message_texts as txt
-import conf
+# -*- coding: utf-8 -*-
+from aiogram import Dispatcher, Bot, executor, types # Aiogram
+from aiogram.utils.executor import start_webhook # Webhook
+from pgdb import DataBase # Postgresql database
+from random import choice, randint # Pseudo-random
+from fuzzywuzzy import process # Comparison and similarity
+from datetime import datetime # Datetime
+import asyncio, logging, os, codecs, re, gspread # other libs
+import message_texts as txt # Messages
+import conf # Configuration
 
-chat = [-1001400136881]
-users = [529598217, 932736973, 636619912, 555328241, 200635302]
+client = gspread.authorize(conf.creds) # Authorization to Google Sheets API
+sheet = client.open(conf.GSHEETNAME) # Opening sheet
+sheet_instance = sheet.get_worksheet(0) # Working w/ sheet
+bot = Bot(token=conf.API_TOKEN) # Bot
+dp = Dispatcher(bot) # Dispatcher
 
-client = gspread.authorize(conf.creds)
-sheet = client.open(conf.GSHEETNAME)
-sheet_instance = sheet.get_worksheet(0)
-bot = Bot(token=conf.API_TOKEN)
-dp = Dispatcher(bot)
-
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["табло"], commands_prefix=['!'], is_reply=True)
-async def table_command_reply(message: types.Message):
+# Reply to message from bot and pin in for table
+# reply: !табло
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["табло"], commands_prefix=['!'], is_reply=True)
+async def table_reply(message: types.Message):
 	try:
 		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	except:
 		pass
 	if message.reply_to_message["from"]["is_bot"]:
 		pg.message_set(message.reply_to_message.message_id, 1708019201)
+		await message.answer(text=f"Таблица установлена <a href='t.me/c/{chat[0]}/{message.reply_to_message.message_id}'тут</a>", parse_mode="HTML")
+	else:
+		await message.answer(text="Ответьте на сообщение от бота, я не умею изменять сообщения пользователей😖")
 
+# Send table
+# !табло
 @dp.message_handler(commands=["табло"], commands_prefix=['!'])
 async def table_command(message: types.Message):
 	try:
@@ -43,7 +47,9 @@ async def table_command(message: types.Message):
 		table += f"{pg.username(f[0])} — {f[1]}\n"
 	await message.answer(text=table, parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["дать"], commands_prefix=['!'], is_reply=True)
+# Add n-points to user
+# reply: !дать 4
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["дать"], commands_prefix=['!'], is_reply=True)
 async def point_add(message: types.Message):
 	try:
 		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -71,7 +77,9 @@ async def point_add(message: types.Message):
 						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["забрать"], commands_prefix=['!'], is_reply=True)
+# Take n-points from user
+# reply: !забрать 4
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["забрать"], commands_prefix=['!'], is_reply=True)
 async def point_remove(message: types.Message):
 	try:
 		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -92,8 +100,10 @@ async def point_remove(message: types.Message):
 		table += f"{pg.username(f[0])} — {f[1]}\n"
 	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавитьмат"], commands_prefix=['!'])
-async def wb_update_add(message: types.Message):
+# Add new words to database with ban words
+# !добавитьмат блять пиздец
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["добавитьмат"], commands_prefix=['!'])
+async def banword_add(message: types.Message):
 	global BW
 	try:
 		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -112,8 +122,10 @@ async def wb_update_add(message: types.Message):
 				await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Добавлено:\n" + w)
 				break
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["убратьмат"], commands_prefix=['!'])
-async def wb_update_remove(message: types.Message):
+# Take away words from database with ban words
+# !убратьмат блять пиздец
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["убратьмат"], commands_prefix=['!'])
+async def wb_remove(message: types.Message):
 	global BW
 	try:
 		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
@@ -128,7 +140,9 @@ async def wb_update_remove(message: types.Message):
 			BW = pg.words()
 			await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Убрано:\n" + w)
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавитьпредмет"], commands_prefix=['!'])
+# Add item
+# !добавитьпредмет Задание 821 Описание задания
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["добавитьпредмет"], commands_prefix=['!'])
 async def item_add(message: types.Message):
 	text = message.text.split()
 	if len(text) < 3:
@@ -139,7 +153,9 @@ async def item_add(message: types.Message):
 	pg.item_add(text[1], text[2], textt)
 	await bot.send_message(chat_id=chat[0], text=f"<b>🆕Новое задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["убратьпредмет"], commands_prefix=['!'])
+# Remove item
+# !убратьпредмет Задание
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["убратьпредмет"], commands_prefix=['!'])
 async def item_remove(message: types.Message):
 	text = message.text.split()
 	if len(text) < 2:
@@ -147,15 +163,19 @@ async def item_remove(message: types.Message):
 	pg.item_remove(text[1])
 	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["описание"], commands_prefix=['!'])
-async def items_description(message: types.Message):
+# Description for all items
+# !описание
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["описание"], commands_prefix=['!'])
+async def item_description(message: types.Message):
 	tlist = sorted(pg.items(), key=lambda x: x[1])
 	text = "<b>Описание заданий:</b>\n\n"
 	for t in tlist:
 		text += f"{t[1]} <b>{t[0]}</b> — <i>{t[2]}</i>\n"
 	await message.answer(text=text, parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["логи"], commands_prefix=['!'])
+# Last logs
+# !логи 23
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["логи"], commands_prefix=['!'])
 async def logs_command(message: types.Message):
 	try:
 		n = int(message.text.split()[1])
@@ -170,7 +190,9 @@ async def logs_command(message: types.Message):
 		logs_text += f"\n<a href='t.me/c/1400136881/{l[2]}'>{l[0]} {l[1]} {pg.username(l[3])} — {l[5]}</a>"
 	await message.answer(text=logs_text, parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["сообщение"], commands_prefix=['!'])
+# Send message from bot tp chat
+# !сообщение Привет, я Бот!
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["сообщение"], commands_prefix=['!'])
 async def sendmessage_command(message: types.Message):
 	text = message.text.split()[1:]
 	msg_text = str()
@@ -180,7 +202,9 @@ async def sendmessage_command(message: types.Message):
 		msg_text += f"{t} "
 	await bot.send_message(chat_id=chat[0], text=msg_text)
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["добавитьфильм"], commands_prefix=['!'])
+# Add film to Google Sheets
+# !добавитьфильм https://www.kinopoisk.ru/film/12198/ 8.3 Игра (1997)
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["добавитьфильм"], commands_prefix=['!'])
 async def film_add(message: types.Message):
 	name = str()
 	mtext = message.text.split()[1:]
@@ -194,12 +218,16 @@ async def film_add(message: types.Message):
 	sheet_instance.update(f'D{row}', f'=IFERROR(ROUND(AVERAGE(G{row}:K{row}), 1), "—")', raw=False)
 	await message.answer(text=f"Добавлен новый фильм в таблицу: {name}")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["админкоманды", "админпомощь"], commands_prefix=['!'])
+# Admin commands
+# !админкоманды
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["админкоманды", "админпомощь"], commands_prefix=['!'])
 async def admin_help_command(message: types.Message):
 	cmd = txt.CMD_ADMIN_MESSAGE
 	await message.answer(text=f"{pg.username(message.from_user.id)} Админ команды:{cmd}", parse_mode="HTML")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["просмотрено"], commands_prefix=['!'])
+# Set film as watched
+# !просмотрено Игра (1997)
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["просмотрено"], commands_prefix=['!'])
 async def watched_command(message: types.Message):
 	film = list()
 	name = str()
@@ -222,7 +250,9 @@ async def watched_command(message: types.Message):
 	except gspread.exceptions.CellNotFound as e:
 		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
-@dp.message_handler(lambda message: message.from_user.id == users[4], commands=["оценка"], commands_prefix=['!'], is_reply=True)
+# Set rating from user to film
+# reply: !оценка 10 Игра (1997)
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["оценка"], commands_prefix=['!'], is_reply=True)
 async def rate_command(message: types.Message):
 	film = list()
 	name = str()
@@ -249,6 +279,8 @@ async def rate_command(message: types.Message):
 	except gspread.exceptions.CellNotFound as e:
 		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
+# Add user-command
+# !set привет Привет, человек
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
 async def usercommand_add(message: types.Message):
 	text = message.text.split()
@@ -262,6 +294,8 @@ async def usercommand_add(message: types.Message):
 	CL = pg.commands()
 	await bot.send_message(chat_id=chat[0], text=f"🆕Новая команда <code>!{text[1]}</code>", parse_mode="HTML")
 
+# Remove user-command
+# !unset привет
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["unset"], commands_prefix=['!'])
 async def usercommand_remove(message: types.Message):
 	text = message.text.split()
@@ -272,11 +306,15 @@ async def usercommand_remove(message: types.Message):
 	CL = pg.commands()
 	await bot.send_message(chat_id=chat[0], text=f"🗑Удалена команда <code>!{text[1]}</code>", parse_mode="HTML")
 
+# Lenght of Ban Word database
+# !количество
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["количество"], commands_prefix=['!'])
 async def wb_count(message: types.Message):
 	text = f"{pg.username(message.from_user.id)} Количество мата в БД: {len(BW)}🙂"
 	await message.answer(text=text)
 
+# Add event
+# !добавитьивент Ивент
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["добавитьивент"], commands_prefix=['!'])
 async def event_add(message: types.Message):
 	text = message.text.split()
@@ -290,6 +328,8 @@ async def event_add(message: types.Message):
 		pg.event_add(textt.strip())
 		await message.answer(text=f"🆕<b>Создан новый ивент:</b>\n«<code>{textt.strip()}</code>»", parse_mode="HTML")
 
+# Remove event
+# !убратьивент Ивент
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["убратьивент"], commands_prefix=['!'])
 async def event_remove(message: types.Message):
 	text = message.text.split()
@@ -303,6 +343,8 @@ async def event_remove(message: types.Message):
 		pg.event_remove(textt.strip())
 		await message.answer(text=f"🆕<b>Удалён ивент:</b>\n«<code>{textt.strip()}</code>»", parse_mode="HTML")
 
+# Next items for user
+# !задания
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["задания", "квесты", "наказания"], commands_prefix=['!'])
 async def items_command(message: types.Message):
 	a = "<b>Грядущие задания:</b> \n\n"
@@ -314,6 +356,8 @@ async def items_command(message: types.Message):
 			a += f"{t[1]} — <code>{t[0]}</code>\n"
 	await message.answer(text=f"{pg.username(message.from_user.id)} {a}", parse_mode="HTML")
 
+# All events
+# !ивенты
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["ивенты"], commands_prefix=['!'])
 async def events_command(message: types.Message):
 	text = "<b>Ивенты:</b>\n"
@@ -323,6 +367,8 @@ async def events_command(message: types.Message):
 			text += "\n<i>" + e + "</i>"
 	await message.answer(text=text, parse_mode="HTML")
 
+# All commands
+# !команды
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["команды", "помощь"], commands_prefix=['!'])
 async def help_command(message: types.Message):
 	cmd = txt.CMD_MESSAGE
@@ -330,6 +376,8 @@ async def help_command(message: types.Message):
 		cmd += f"\n<code>!{c}</code>"
 	await message.answer(text=f"{pg.username(message.from_user.id)}{cmd}", parse_mode="HTML")
 
+# Yes or No
+# !даилинет
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["даилинет"], commands_prefix=['!'])
 async def yesorno_command(message: types.Message):
 	ran = randint(1, 6)
@@ -339,6 +387,8 @@ async def yesorno_command(message: types.Message):
 		text = choice(txt.NO_LIST)
 	await message.answer(text=f"{pg.username(message.from_user.id)} {text}")
 
+# Chance of event
+# !шанс Событие
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["шанс"], commands_prefix=['!'])
 async def chance_command(message: types.Message):
 	text = str()
@@ -350,6 +400,8 @@ async def chance_command(message: types.Message):
 	chance_text = f"{pg.username(message.from_user.id)} шанс того, что {text}{randint(0, 100)}%"
 	await message.answer(text=chance_text)
 
+# Top of used words
+# !словарь 13
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["словарь"], commands_prefix=['!'])
 async def dictionary_command(message: types.Message):
 	try:
@@ -364,6 +416,8 @@ async def dictionary_command(message: types.Message):
 		dictionary_text += f"\n{dictl.index(d)+1}. <i>{d[0]}</i> — {d[1]}"
 	await message.answer(text=dictionary_text, parse_mode="HTML")
 
+# Poll with non-watched films
+# !смотрим
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["смотрим"], commands_prefix=['!'])
 async def watchlist_command(message: types.Message):
 	film = list()
@@ -373,6 +427,8 @@ async def watchlist_command(message: types.Message):
 			film.append(f"{r['name']} (КП: {r['kp']})")
 	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False)
 
+# Set rating to film
+# !оценка 6 Игра (1997)
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["оценка"], commands_prefix=['!'])
 async def rate_command(message: types.Message):
 	film = list()
@@ -400,6 +456,19 @@ async def rate_command(message: types.Message):
 	except gspread.exceptions.CellNotFound as e:
 		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
+# Self mute
+# !табуретка 10000
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["123"], commands_prefix=['!'])
+async def selfmute_command(message: types.Message):
+	now = int(datetime.now().timestamp())
+	if message.text.split() > 1 int(message.text.split()[1]).isdigit():
+		args = message.text.split()[1]
+		fdate = now + args
+	await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id, can_send_messages=False, until_date=fdate)
+	await message.answer(text=f"{pg.username(message.from_user.id)} был замучен на {args} секунд")
+
+# Usercomands
+# Example: !команда
 @dp.message_handler(lambda message: message.from_user.id in users and message.text[0] == '!')
 async def usercommands(message: types.Message):
 	cmd = message.text[1:].split()
@@ -407,6 +476,7 @@ async def usercommands(message: types.Message):
 		text = pg.commands_text()[pg.commands().index(cmd[0])]
 		await message.answer(text=f"{pg.username(message.from_user.id)} {text}", parse_mode="HTML", disable_web_page_preview=True)
 
+# Ban-word Filter
 @dp.message_handler(lambda message: message.from_user.id in users)
 async def filter(message: types.Message):
 	if message.from_user.username == None:
@@ -437,7 +507,7 @@ async def filter(message: types.Message):
 		for t in outl:
 			if t in txt.BOT_LIST:
 				with open(f"gif/{randint(1, 3)}.gif", "rb") as gif:
-					await message.answer_video(gif, caption="ни грути. цём")
+					await message.reply_video(gif, caption="ни грути. цём")
 					gif.close()
 			if t != None:
 				if t in dw and len(t) > 1:
@@ -483,6 +553,7 @@ async def filter(message: types.Message):
 		text = choice(pg.events())
 		await bot.send_message(chat_id=chat[0], text=f"{pg.username(message.from_user.id)} <b>Вам выпал ивент:</b>\n\n{text}", parse_mode="HTML")
 
+# Edited message ban-word filter
 @dp.edited_message_handler(lambda message: message.from_user.id in users)
 async def edited_message_filter(message: types.Message):
 	if message.from_user.username == None:
@@ -539,6 +610,7 @@ async def edited_message_filter(message: types.Message):
 						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
+# Messages for users who are not in users list
 @dp.message_handler(lambda message: message.from_user.id not in users, content_types=types.message.ContentType.ANY)
 async def messages(message: types.Message):
 	await bot.send_message(chat_id=users[4], text=message.from_user.id)
@@ -548,23 +620,28 @@ async def messages(message: types.Message):
 	link_markup.add(author_button)
 	#await message.answer(text="<b>Полезные ссылки:</b>", parse_mode="HTML", reply_markup=link_markup)
 
+# Database connecting
 async def db_update():
 	while True:
 		global pg, BW, CL
 		pg = DataBase(conf.DATABASE)
 		BW = pg.words()
 		CL = pg.commands()
+		admin_users = await bot.get_chat_administrators(chat[0])
 		await asyncio.sleep(180)
 
+# Set vars
 async def on_startup(dp):
+	chat = [-1001400136881]
+	users = [529598217, 932736973, 636619912, 555328241, 200635302]
 	await bot.delete_webhook(drop_pending_updates=True)
 	await bot.set_webhook(conf.WEBHOOK_URL, drop_pending_updates=True)
 
+# Starting
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.INFO)
 	loop = asyncio.get_event_loop()
 	loop.create_task(db_update())
-	#executor.start_polling(dispatcher=dp, loop=loop)
 	start_webhook(
 		dispatcher=dp, 
 		loop=loop,
