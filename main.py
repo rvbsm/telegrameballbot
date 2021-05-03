@@ -643,11 +643,12 @@ async def messages(message: types.Message):
 # Database connecting
 async def db_update():
 	while True:
-		global pg, BW, CL
+		global pg, BW, CL, admin_users
 		pg = DataBase(conf.DATABASE)
 		BW = pg.words()
 		CL = pg.commands()
 		await asyncio.sleep(180)
+		admin_users = await bot.get_chat_administrators(chat[0])
 
 # Set vars
 async def on_startup(dp):
