@@ -294,10 +294,6 @@ async def promote_command(message: types.Message):
 		can_promote_members=True)
 	await bot.set_chat_administrator_custom_title(chat_id=chat[0], user_id=message.from_user.id, custom_title="солнышко")
 
-@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["юзер"], commands_prefix=['!'])
-async def restrict_command(message: types.Message):
-	await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id)
-
 # Add user-command
 # !set привет Привет, человек
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
