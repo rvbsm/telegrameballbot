@@ -461,7 +461,7 @@ async def rate_command(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["табуретка"], commands_prefix=['!'])
 async def selfmute_command(message: types.Message):
 	now = int(datetime.now().timestamp())
-	if len(message.text.split()) > 1 and int(message.text.split()[1]).isdigit():
+	if len(message.text.split()) > 1 and message.text.split()[1].isdigit():
 		args = message.text.split()[1]
 		fdate = now + args
 	await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id, can_send_messages=False, until_date=fdate)
