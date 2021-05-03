@@ -627,13 +627,13 @@ async def db_update():
 		pg = DataBase(conf.DATABASE)
 		BW = pg.words()
 		CL = pg.commands()
-		admin_users = await bot.get_chat_administrators(chat[0])
 		await asyncio.sleep(180)
 
 # Set vars
 async def on_startup(dp):
 	chat = [-1001400136881]
 	users = [529598217, 932736973, 636619912, 555328241, 200635302]
+	admin_users = await bot.get_chat_administrators(chat[0])
 	await bot.delete_webhook(drop_pending_updates=True)
 	await bot.set_webhook(conf.WEBHOOK_URL, drop_pending_updates=True)
 
