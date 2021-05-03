@@ -292,7 +292,7 @@ async def promote_command(message: types.Message):
 		can_restrict_members=True, 
 		can_pin_messages=True, 
 		can_promote_members=True)
-	await bot.set_chat_administrator_custom_title(chat_id=chat[0], user_id=message.from_user.id, custom_title="солнышко")
+	await bot.set_chat_administrator_custom_title(chat_id=chat[0], user_id=message.from_user.id, custom_title=message.get_args())
 
 # Add user-command
 # !set привет Привет, человек
