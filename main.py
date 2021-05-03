@@ -656,6 +656,7 @@ async def on_startup(dp):
 	chat = [-1001400136881]
 	users = [529598217, 932736973, 636619912, 555328241, 200635302]
 	admin_users = await bot.get_chat_administrators(chat[0])
+	print(admin_users)
 	await bot.delete_webhook(drop_pending_updates=True)
 	await bot.set_webhook(conf.WEBHOOK_URL, drop_pending_updates=True)
 
