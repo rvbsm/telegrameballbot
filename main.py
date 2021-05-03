@@ -279,6 +279,25 @@ async def rate_command(message: types.Message):
 	except gspread.exceptions.CellNotFound as e:
 		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["админ"], commands_prefix=['!'], is_reply=True)
+async def promote_command(message: types.Message):
+	await bot.promote_chat_member(
+		chat_id=chat[0], 
+		user_id=message.from_user.id, 
+		can_manage_chat=True, 
+		can_change_info=True, 
+		can_delete_messages=True, 
+		can_manage_voice_chats=True, 
+		can_invite_users=True, 
+		can_restrict_members=True, 
+		can_pin_messages=True, 
+		can_promote_members=True)
+	await bot.set_chat_administrator_custom_title(chat_id=chat[0], user_id=message.from_user.id, custom_title="солнышко")
+
+@dp.message_handler(lambda message: message.from_user.id == 200635302, commands=["юзер"], commands_prefix=['!'])
+async def restrict_command(message: types.Message):
+	await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id)
+
 # Add user-command
 # !set привет Привет, человек
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
