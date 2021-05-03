@@ -382,10 +382,10 @@ async def rate_command(message: types.Message):
 		if r['status'] != "yep":
 			film.append(r["name"])
 	user_id = message.from_user.id
-	message = message.text.split()
-	urate = message[1]
+	mtext = message.text.split()
+	urate = mtext[1]
 	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
-	for m in message[2:]:
+	for m in mtext[2:]:
 		name += m + " "
 	name = name.strip()
 	ratio = process.extract(name, film)
