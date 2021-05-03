@@ -462,7 +462,7 @@ async def rate_command(message: types.Message):
 async def selfmute_command(message: types.Message):
 	now = int(datetime.now().timestamp())
 	if len(message.text.split()) > 1 and message.text.split()[1].isdigit():
-		args = message.text.split()[1]
+		args = int(message.text.split()[1])
 		fdate = now + args
 	await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id, can_send_messages=False, until_date=fdate)
 	await message.answer(text=f"{pg.username(message.from_user.id)} был замучен на {args} секунд")
