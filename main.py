@@ -5,6 +5,7 @@ from pgdb import DataBase # Postgresql database
 from random import choice, randint # Pseudo-random
 from fuzzywuzzy import process # Comparison and similarity
 from datetime import datetime # Datetime
+from math import ceil # Round up
 import asyncio, logging, os, codecs, re, gspread # other libs
 import message_texts as txt # Messages
 import conf # Configuration
@@ -441,7 +442,7 @@ async def watchlist_command(message: types.Message):
 	film = list()
 	req = sheet_instance.get_all_records()
 	for r in req:
-		if r['status'] == "badyep":
+		if r['status'] == "badyep" and len(film) <11:
 			film.append(f"{r['name']} (КП: {r['kp']})")
 	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False)
 
@@ -481,10 +482,11 @@ async def selfmute_command(message: types.Message):
 	now = int(datetime.now().timestamp())
 	if len(message.text.split()) > 1 and message.text.split()[1].isdigit():
 		args = int(message.text.split()[1])
+		args = ceil(args / 60) * 60
 		fdate = now + args
 	if message.from_user.id not in admin_users:
 		await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id, can_send_messages=False, until_date=fdate)
-		await message.answer(text=f"{pg.username(message.from_user.id)} был замучен на {args} секунд")
+	await message.answer(text=f"{pg.username(message.from_user.id)} был замучен на {args/60} минут")
 
 # Usercomands
 # Example: !команда
