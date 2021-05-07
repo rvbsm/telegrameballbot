@@ -442,6 +442,7 @@ async def watchlist_command(message: types.Message):
 	for r in req:
 		if r['status'] == "badyep" and len(film) < 11:
 			film.append(f"{r['name']} {r['genre']} (КП: {r['kp']})")
+	await message.answer(text=pg.commands_text()[pg.commands().index('ахуй')], parse_mode="HTML")
 	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False, close_date=date)
 
 # Set rating to film
@@ -534,6 +535,8 @@ async def filter(message: types.Message):
 				with open(f"gif/{randint(1, 3)}.gif", "rb") as gif:
 					await message.reply_video(gif, caption="ни грути. цём")
 					gif.close()
+			if t == "бот":
+				await message.answer("Иди нахуй, быдло, бот здесь я")
 			if t != None:
 				if t in dw and len(t) > 1:
 					pg.dictionary_set(t, pg.dictionary_count(t)+1)
