@@ -529,13 +529,16 @@ async def filter(message: types.Message):
 				outw += l
 				lastl = l
 		outl.add(outw)
+	bt = 0
 	try:
 		for t in outl:
 			if t in txt.BOT_LIST:
 				with open(f"gif/{randint(1, 3)}.gif", "rb") as gif:
 					await message.reply_video(gif, caption="ни грути. цём")
 					gif.close()
-			if t == "бот":
+			if t in ("бот", "слит"):
+				bt += 1
+			if bt == 2:
 				await message.answer("Иди нахуй, быдло, бот здесь я")
 			if t != None:
 				if t in dw and len(t) > 1:
