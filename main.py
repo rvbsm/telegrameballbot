@@ -294,24 +294,6 @@ async def admin_rate_command(message: types.Message):
 	except gspread.exceptions.CellNotFound as e:
 		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
-"""@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["админ"], commands_prefix=['!'])
-async def promote_command(message: types.Message):
-	await bot.promote_chat_member(
-		chat_id=chat[0], 
-		user_id=message.from_user.id, 
-		can_manage_chat=True, 
-		can_change_info=True, 
-		can_delete_messages=True, 
-		can_manage_voice_chats=True, 
-		can_invite_users=True, 
-		can_restrict_members=True, 
-		can_pin_messages=True, 
-		can_promote_members=True)
-	await bot.set_chat_administrator_custom_title(
-		chat_id=chat[0], 
-		user_id=message.from_user.id, 
-		custom_title=message.get_args())"""
-
 # Add user-command
 # !set привет Привет, человек
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
@@ -455,11 +437,12 @@ async def dictionary_command(message: types.Message):
 async def watchlist_command(message: types.Message):
 	sheet_instance = sheet.get_worksheet(0)
 	film = list()
+	date = int(datetime.now().timestamp()) + 300
 	req = sheet_instance.get_all_records()
 	for r in req:
-		if r['status'] == "badyep" and len(film) <11:
-			film.append(f"{r['name']} (КП: {r['kp']})")
-	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False)
+		if r['status'] == "badyep" and len(film) < 11:
+			film.append(f"{r['name']} {r['genre']} (КП: {r['kp']})")
+	await bot.send_poll(chat_id=message.chat.id, question=txt.FILM_POLL, options=film, allows_multiple_answers=True, is_anonymous=False, close_date=date)
 
 # Set rating to film
 # !оценка 6 Игра (1997)
