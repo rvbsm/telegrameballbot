@@ -9,9 +9,17 @@ import asyncio, logging, os, codecs, re, gspread # other libs
 import message_texts as txt # Messages
 import conf # Configuration
 
+"""
+ПЛАНЫ:
+
+Присылать inline-кнопки с НАЙДЕНЫМИ ФИЛЬМАМИ
+Оптимизация кода
+Отвечать на 'бот'
+? Квесты
+"""
+
 client = gspread.authorize(conf.creds) # Authorization to Google Sheets API
 sheet = client.open(conf.GSHEETNAME) # Opening sheet
-sheet_instance = sheet.get_worksheet(0) # Working w/ sheet
 bot = Bot(token=conf.API_TOKEN) # Bot
 dp = Dispatcher(bot) # Dispatcher
 
@@ -184,7 +192,6 @@ async def logs_command(message: types.Message):
 	if n > 50:
 		return 0
 	logs = sorted(pg.logs(), key=lambda x: x[2], reverse=True)
-
 	logs_text = f"<b>Последние {n} бан-вордов:</b>"
 	for l in logs[0:n]:
 		logs_text += f"\n<a href='t.me/c/1400136881/{l[2]}'>{l[0]} {l[1]} {pg.username(l[3])} — {l[5]}</a>"
@@ -197,26 +204,25 @@ async def sendmessage_command(message: types.Message):
 	text = message.text.split()[1:]
 	msg_text = str()
 	if len(text) < 1:
-		return
-	for t in text:
-		msg_text += f"{t} "
+		return 0
+	msg_text = ' '.join(map(str, text))
 	await bot.send_message(chat_id=chat[0], text=msg_text)
 
 # Add film to Google Sheets
-# !добавитьфильм https://www.kinopoisk.ru/film/12198/ 8.3 Игра (1997)
+# !добавитьфильм https://www.kinopoisk.ru/film/12198/ 8.3 триллер/детектив Игра (1997)
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["добавитьфильм"], commands_prefix=['!'])
 async def film_add(message: types.Message):
-	name = str()
+	sheet_instance = sheet.get_worksheet(0)
 	mtext = message.text.split()[1:]
 	row = sheet_instance.row_count
 	kp_link = mtext[0]
 	kp = mtext[1]
-	for w in mtext[2:]:
-		name += w + " "
-	sheet_instance.insert_row(index=row, values=['badyep', name.strip(), kp])
-	sheet_instance.update(f'C{row}', f'=HYPERLINK("{kp_link}", {kp})', raw=False)
-	sheet_instance.update(f'D{row}', f'=IFERROR(ROUND(AVERAGE(G{row}:K{row}), 1), "—")', raw=False)
-	await message.answer(text=f"Добавлен новый фильм в таблицу: {name}")
+	genre = mtext[2]
+	name = ' '.join(map(str, mtext[3:]))
+	sheet_instance.insert_row(index=row, values=['badyep', name.strip(), genre, kp])
+	sheet_instance.update(f'D{row}', f'=HYPERLINK("{kp_link}", {kp})', raw=False)
+	sheet_instance.update(f'E{row}', f'=IFERROR(ROUND(AVERAGE(H{row}:L{row}), 1), "—")', raw=False)
+	await message.answer(text=f"Добавлен новый фильм в таблицу: «{name}»")
 
 # Admin commands
 # !админкоманды
@@ -229,6 +235,7 @@ async def admin_help_command(message: types.Message):
 # !просмотрено Игра (1997)
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["просмотрено"], commands_prefix=['!'])
 async def watched_command(message: types.Message):
+	sheet_instance = sheet.get_worksheet(0)
 	film = list()
 	name = str()
 	req = sheet_instance.get_all_records()
@@ -247,26 +254,33 @@ async def watched_command(message: types.Message):
 	try:
 		frow = sheet_instance.find(query=name, in_column=2).row
 		sheet_instance.update(f"A{frow}", "yep")
+		sheet_instance.update(f"F{frow}", datetime.now().strftime("%d.%m.%Y"))
 	except gspread.exceptions.CellNotFound as e:
 		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
 # Set rating from user to film
 # reply: !оценка 10 Игра (1997)
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["оценка"], commands_prefix=['!'], is_reply=True)
-async def rate_command(message: types.Message):
-	film = list()
-	name = str()
+async def admin_rate_command(message: types.Message):
+	sheet_instance = sheet.get_worksheet(0)
+	film = set()
+	notseen = set()
 	req = sheet_instance.get_all_records()
 	for r in req[5:]:
-		if r['status'] != "yep":
-			film.append(r["name"])
+		if r['status'] == "yep":
+			film.add(r["name"])
+		elif r['status'] == "badyep":
+			notseen.add(r["name"])
 	user_id = message.reply_to_message["from"]["id"]
-	message = message.text.split()
-	urate = message[1]
+	mtext = message.text.split()
+	urate = mtext[1]
 	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
-	for m in message[2:]:
-		name += m + " "
-	name = name.strip()
+	name = ' '.join(map(str, mtext[2:]))
+	notseen_ratio = process.extract(name, notseen)
+	for r in notseen_ratio:
+		if r[1] > 90:
+			await message.answer(f"Вы ещё не смотрели {r[0]}")
+			return 0
 	ratio = process.extract(name, film)
 	for r in ratio:
 		if r[1] > 90:
@@ -275,7 +289,7 @@ async def rate_command(message: types.Message):
 	try:
 		frow = sheet_instance.find(query=name, in_column=2).row
 		sheet_instance.update_cell(row=frow, col=ucol, value=urate)
-		await message.answer(f"Поставлена оценка {urate} фильму {name} от {pg.username(user_id)}")
+		await message.answer(f"Поставлена оценка {urate} фильму «{name}» от {pg.username(user_id)}")
 	except gspread.exceptions.CellNotFound as e:
 		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
@@ -438,6 +452,7 @@ async def dictionary_command(message: types.Message):
 # !смотрим
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["смотрим"], commands_prefix=['!'])
 async def watchlist_command(message: types.Message):
+	sheet_instance = sheet.get_worksheet(0)
 	film = list()
 	req = sheet_instance.get_all_records()
 	for r in req:
@@ -449,19 +464,25 @@ async def watchlist_command(message: types.Message):
 # !оценка 6 Игра (1997)
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["оценка"], commands_prefix=['!'])
 async def rate_command(message: types.Message):
-	film = list()
-	name = str()
+	sheet_instance = sheet.get_worksheet(0)
+	film = set()
+	notseen = set()
 	req = sheet_instance.get_all_records()
 	for r in req[5:]:
-		if r['status'] != "yep":
-			film.append(r["name"])
+		if r['status'] == "yep":
+			film.add(r["name"])
+		elif r['status'] == "badyep":
+			notseen.add(r["name"])
 	user_id = message.from_user.id
 	mtext = message.text.split()
 	urate = mtext[1]
 	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
-	for m in mtext[2:]:
-		name += m + " "
-	name = name.strip()
+	name = ' '.join(map(str, mtext[2:]))
+	notseen_ratio = process.extract(name, notseen)
+	for r in notseen_ratio:
+		if r[1] > 90:
+			await message.answer(f"Вы ещё не смотрели {r[0]}")
+			return 0
 	ratio = process.extract(name, film)
 	for r in ratio:
 		if r[1] > 90:
