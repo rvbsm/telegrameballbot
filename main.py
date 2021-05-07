@@ -243,8 +243,8 @@ async def watched_command(message: types.Message):
 	for r in req[5:]:
 		if r['status'] != "yep":
 			film.append(r["name"])
-	message = message.text.split()
-	for m in message[1:]:
+	mtext = message.text.split()
+	for m in mtext[1:]:
 		name += m + " "
 	name = name.strip()
 	ratio = process.extract(name, film)
