@@ -382,7 +382,7 @@ async def yesorno_command(message: types.Message):
 		text = choice(txt.YES_LIST)
 	elif ran % 2 == 0:
 		text = choice(txt.NO_LIST)
-	await message.reply(text={text})
+	await message.reply(text=text)
 
 # Chance of event
 # !шанс Событие
@@ -392,7 +392,7 @@ async def chance_command(message: types.Message):
 	if len(mtext) < 2:
 		return 0
 	text = ' '.join(map(str, mtext))
-	chance_text = f"Шанс того, что {text}{randint(0, 100)}%"
+	chance_text = f"Шанс того, что {text} {randint(0, 100)}%"
 	await message.reply(text=chance_text)
 
 # Top of used words
