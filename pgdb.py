@@ -87,6 +87,8 @@ class DataBase:
 	def events(self):
 		self.curpg.execute('''SELECT "name" FROM "events"''')
 		rows = self.curpg.fetchall()
+		if rows == list():
+			return rows
 		for r in rows:
 			return[r[0] for r in rows]
 

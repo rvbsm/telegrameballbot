@@ -13,10 +13,9 @@ import conf # Configuration
 """
 ПЛАНЫ:
 
-Присылать inline-кнопки с НАЙДЕНЫМИ ФИЛЬМАМИ
-Оптимизация кода
 Отвечать на 'бот'
 ? Квесты
+? Для общего пользования
 """
 
 client = gspread.authorize(conf.creds) # Authorization to Google Sheets API
@@ -24,53 +23,47 @@ sheet = client.open(conf.GSHEETNAME) # Opening sheet
 bot = Bot(token=conf.API_TOKEN) # Bot
 dp = Dispatcher(bot) # Dispatcher
 
+
+def get_arguments(text):
+	return text.split()[1:]
+
 # Reply to message from bot and pin in for table
 # reply: !табло
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["табло"], commands_prefix=['!'], is_reply=True)
 async def table_reply(message: types.Message):
-	try:
-		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	except:
-		pass
 	if message.reply_to_message["from"]["is_bot"]:
 		pg.message_set(message.reply_to_message.message_id, 1708019201)
 		await message.answer(text=f"Таблица установлена <a href='t.me/c/{chat[0]}/{message.reply_to_message.message_id}'тут</a>", parse_mode="HTML")
 	else:
-		await message.answer(text="Ответьте на сообщение от бота, я не умею изменять сообщения пользователей😖")
+		await message.answer(text="Ответьте на сообщение от бота или отправьте сообщение не ответом, я не умею изменять сообщения пользователей😖")
 
 # Send table
 # !табло
 @dp.message_handler(commands=["табло"], commands_prefix=['!'])
 async def table_command(message: types.Message):
-	try:
-		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	except:
-		pass
 	ulist = list()
 	table = txt.TABLE_MESSAGE
+	await message.answer(text=table, parse_mode="HTML")
 	pg.message_set(message.message_id+1, 1708019201)
 	for u in users:
 		ulist.append(pg.message(u))
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		table += f"{pg.username(f[0])} — {f[1]}\n"
-	await message.answer(text=table, parse_mode="HTML")
+	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 # Add n-points to user
 # reply: !дать 4
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["дать"], commands_prefix=['!'], is_reply=True)
 async def point_add(message: types.Message):
-	try:
-		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	except:
-		pass
+	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	ulist = list()
 	table = txt.TABLE_MESSAGE
-	mtext = message.text.split()
+	mtext = get_arguments(message.text)
 	items = pg.items()
 	oldm = pg.message(message.reply_to_message["from"]["id"])[1] + 1
-	if len(mtext) > 1 and mtext[1].isdigit():
-		n = int(mtext[1])
+	if len(mtext) > 1 and mtext[0].isdigit():
+		n = int(mtext[0])
 	else:
 		n = 1
 	nlist = list(range(oldm, oldm+n))
@@ -90,15 +83,12 @@ async def point_add(message: types.Message):
 # reply: !забрать 4
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["забрать"], commands_prefix=['!'], is_reply=True)
 async def point_remove(message: types.Message):
-	try:
-		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	except:
-		pass
+	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	ulist = list()
 	table = txt.TABLE_MESSAGE
-	mtext = message.text.split()
-	if len(mtext) > 1 and mtext[1].isdigit():
-		n = int(mtext[1])
+	mtext = get_arguments(message.text)
+	if len(mtext) > 1 and mtext[0].isdigit():
+		n = int(mtext[0])
 	else:
 		n = 1
 	pg.message_set(pg.message(message.reply_to_message["from"]["id"])[1]-n, message.reply_to_message["from"]["id"])
@@ -114,14 +104,11 @@ async def point_remove(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["добавитьмат"], commands_prefix=['!'])
 async def banword_add(message: types.Message):
 	global BW
-	try:
-		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	except:
-		pass
-	if len(message.text.split()) < 2:
+	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	mtext = get_arguments(message.text)
+	if len(mtext) < 1:
 		return 0
-	word = message.text.split()[1:]
-	for w in word:
+	for w in mtext:
 		for l in w:
 			if w not in BW:
 				if not l.isalpha():
@@ -136,14 +123,11 @@ async def banword_add(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["убратьмат"], commands_prefix=['!'])
 async def wb_remove(message: types.Message):
 	global BW
-	try:
-		await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-	except:
-		pass
-	if len(message.text.split()) < 2:
+	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+	mtext = get_arguments(message.text)
+	if len(mtext) < 1:
 		return 0
-	word = message.text.split()[1:]
-	for w in word:
+	for w in mtext:
 		if w in BW:
 			pg.word_remove(w)
 			BW = pg.words()
@@ -153,41 +137,39 @@ async def wb_remove(message: types.Message):
 # !добавитьпредмет Задание 821 Описание задания
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["добавитьпредмет"], commands_prefix=['!'])
 async def item_add(message: types.Message):
-	text = message.text.split()
-	if len(text) < 3:
+	mtext = get_arguments(message.text)
+	if len(mtext) < 2:
 		return 0
-	textt = str()
-	for t in text[3:]:
-		textt += t + ' '
-	pg.item_add(text[1], text[2], textt)
-	await bot.send_message(chat_id=chat[0], text=f"<b>🆕Новое задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
+	desc = ' '.join(map(str, mtext[2:]))
+	pg.item_add(mtext[0], mtext[1], desc)
+	await bot.send_message(chat_id=chat[0], text=f"<b>🆕Новое задание:</b> «<code>{mtext[0]}</code>»", parse_mode="HTML")
 
 # Remove item
 # !убратьпредмет Задание
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["убратьпредмет"], commands_prefix=['!'])
 async def item_remove(message: types.Message):
-	text = message.text.split()
-	if len(text) < 2:
+	mtext = get_arguments(message.text)
+	if len(text) < 1:
 		return 0
-	pg.item_remove(text[1])
-	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{text[1]}</code>»", parse_mode="HTML")
+	pg.item_remove(mtext[1])
+	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{mtext[0]}</code>»", parse_mode="HTML")
 
 # Description for all items
 # !описание
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["описание"], commands_prefix=['!'])
 async def item_description(message: types.Message):
 	tlist = sorted(pg.items(), key=lambda x: x[1])
-	text = "<b>Описание заданий:</b>\n\n"
+	desc_text = "<b>Описание заданий:</b>\n\n"
 	for t in tlist:
-		text += f"{t[1]} <b>{t[0]}</b> — <i>{t[2]}</i>\n"
-	await message.answer(text=text, parse_mode="HTML")
+		desc_text += f"{t[1]} <b>{t[0]}</b> — <i>{t[2]}</i>\n"
+	await message.answer(text=desc_text, parse_mode="HTML")
 
 # Last logs
 # !логи 23
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["логи"], commands_prefix=['!'])
 async def logs_command(message: types.Message):
 	try:
-		n = int(message.text.split()[1])
+		n = int(get_arguments(message.text)[0])
 	except:
 		n = 25
 	if n > 50:
@@ -198,15 +180,14 @@ async def logs_command(message: types.Message):
 		logs_text += f"\n<a href='t.me/c/1400136881/{l[2]}'>{l[0]} {l[1]} {pg.username(l[3])} — {l[5]}</a>"
 	await message.answer(text=logs_text, parse_mode="HTML")
 
-# Send message from bot tp chat
+# Send message from bot to chat
 # !сообщение Привет, я Бот!
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["сообщение"], commands_prefix=['!'])
 async def sendmessage_command(message: types.Message):
-	text = message.text.split()[1:]
-	msg_text = str()
-	if len(text) < 1:
+	mtext = get_arguments(message.text)
+	if len(mtext) < 1:
 		return 0
-	msg_text = ' '.join(map(str, text))
+	msg_text = ' '.join(map(str, mtext))
 	await bot.send_message(chat_id=chat[0], text=msg_text)
 
 # Add film to Google Sheets
@@ -214,8 +195,8 @@ async def sendmessage_command(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["добавитьфильм"], commands_prefix=['!'])
 async def film_add(message: types.Message):
 	sheet_instance = sheet.get_worksheet(0)
-	mtext = message.text.split()[1:]
 	row = sheet_instance.row_count
+	mtext = get_arguments(message.text)
 	kp_link = mtext[0]
 	kp = mtext[1]
 	genre = mtext[2]
@@ -237,139 +218,141 @@ async def admin_help_command(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["просмотрено"], commands_prefix=['!'])
 async def watched_command(message: types.Message):
 	sheet_instance = sheet.get_worksheet(0)
-	film = list()
-	name = str()
 	req = sheet_instance.get_all_records()
-	for r in req[5:]:
-		if r['status'] != "yep":
-			film.append(r["name"])
-	mtext = message.text.split()
-	for m in mtext[1:]:
-		name += m + " "
-	name = name.strip()
+	film_markup = types.InlineKeyboardMarkup(row_width=4)
+	film = set()
+	fsearch = list()
+	user_id = message.from_user.id
+	for r in req:
+		if r['status'] == "badyep":
+			film.add(r["name"])
+	mtext = get_arguments(message.text)
+	name = ' '.join(map(str, mtext))
 	ratio = process.extract(name, film)
 	for r in ratio:
-		if r[1] > 90:
-			name = r[0]
-			break
-	try:
-		frow = sheet_instance.find(query=name, in_column=2).row
-		sheet_instance.update(f"A{frow}", "yep")
-		sheet_instance.update(f"F{frow}", datetime.now().strftime("%d.%m.%Y"))
-	except gspread.exceptions.CellNotFound as e:
-		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+		if r[1] > 75:
+			fsearch.append(r[0])
+	if len(fsearch) > 1:
+		for f in sorted(fsearch, key=lambda x: x[-5:]):
+			print(f"watched-{f}-{user_id}")
+			film_button = types.InlineKeyboardButton(text=f, callback_data=f"watched-{f}-{user_id}")
+			film_markup.add(film_button)
+		await message.answer(text="Нашёл несколько фильмов:", reply_markup=film_markup)
+	elif len(fsearch) < 2:
+		try:
+			frow = sheet_instance.find(query=name, in_column=2).row
+			sheet_instance.update(f"A{frow}", "yep")
+			sheet_instance.update(f"F{frow}", datetime.now().strftime("%d.%m.%Y"))
+			await message.answer("Как вам фильм, понравился?")
+		except gspread.exceptions.CellNotFound as e:
+			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
 # Set rating from user to film
 # reply: !оценка 10 Игра (1997)
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["оценка"], commands_prefix=['!'], is_reply=True)
 async def admin_rate_command(message: types.Message):
 	sheet_instance = sheet.get_worksheet(0)
-	film = set()
-	notseen = set()
 	req = sheet_instance.get_all_records()
-	for r in req[5:]:
+	film_markup = types.InlineKeyboardMarkup(row_width=4)
+	film = set()
+	fsearch = list()
+	for r in req:
 		if r['status'] == "yep":
 			film.add(r["name"])
-		elif r['status'] == "badyep":
-			notseen.add(r["name"])
 	user_id = message.reply_to_message["from"]["id"]
-	mtext = message.text.split()
-	urate = mtext[1]
+	mtext = get_arguments(message.text)
+	urate = mtext[0]
+	if not urate.isdigit():
+		await message.answer("Оценка должна быть числом")
+		return 0
 	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
-	name = ' '.join(map(str, mtext[2:]))
-	notseen_ratio = process.extract(name, notseen)
-	for r in notseen_ratio:
-		if r[1] > 90:
-			await message.answer(f"Вы ещё не смотрели {r[0]}")
-			return 0
+	name = ' '.join(map(str, mtext[1:]))
 	ratio = process.extract(name, film)
 	for r in ratio:
-		if r[1] > 90:
-			name = r[0]
-			break
-	try:
-		frow = sheet_instance.find(query=name, in_column=2).row
-		sheet_instance.update_cell(row=frow, col=ucol, value=urate)
-		await message.answer(f"Поставлена оценка {urate} фильму «{name}» от {pg.username(user_id)}")
-	except gspread.exceptions.CellNotFound as e:
-		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+		if r[1] > 75:
+			fsearch.append(r[0])
+	if len(fsearch) > 1:
+		for f in sorted(fsearch, key=lambda x: x[-5:]):
+			film_button = types.InlineKeyboardButton(text=f, callback_data=f"{urate}-{f}-{user_id}")
+			film_markup.add(film_button)
+		await message.answer(text="Нашёл несколько фильмов:", reply_markup=film_markup)
+	elif len(fsearch) < 2:
+		if len(fsearch) == 0:
+			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+			return 0
+		try:
+			frow = sheet_instance.find(query=fsearch[0], in_column=2).row
+			sheet_instance.update_cell(row=frow, col=ucol, value=urate)
+			await message.answer(f"Поставлена оценка {urate} фильму {fsearch[0]} от {pg.username(user_id)}")
+		except gspread.exceptions.CellNotFound as e:
+			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
 # Add user-command
 # !set привет Привет, человек
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
 async def usercommand_add(message: types.Message):
-	text = message.text.split()
-	if len(text) < 3:
-		return 0
-	textt = str()
-	for t in text[2:]:
-		textt += t + ' '
-	pg.command_add(text[1], textt)
 	global CL
+	mtext = get_arguments(message.text)
+	if len(mtext) < 2:
+		return 0
+	text = ' '.join(map(str, mtext[1:]))
+	pg.command_add(mtext[0], text)
 	CL = pg.commands()
-	await bot.send_message(chat_id=chat[0], text=f"🆕Новая команда <code>!{text[1]}</code>", parse_mode="HTML")
+	await bot.send_message(chat_id=chat[0], text=f"🆕Новая команда <code>!{mtext[0]}</code>", parse_mode="HTML")
 
 # Remove user-command
 # !unset привет
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["unset"], commands_prefix=['!'])
 async def usercommand_remove(message: types.Message):
-	text = message.text.split()
-	if len(text) < 2:
-		return 0
-	pg.command_remove(text[1])
 	global CL
+	mtext = get_arguments(message.text)
+	if len(mtext) < 1:
+		return 0
+	pg.command_remove(mtext[0])
 	CL = pg.commands()
-	await bot.send_message(chat_id=chat[0], text=f"🗑Удалена команда <code>!{text[1]}</code>", parse_mode="HTML")
+	await bot.send_message(chat_id=chat[0], text=f"🗑Удалена команда <code>!{mtext[0]}</code>", parse_mode="HTML")
 
 # Lenght of Ban Word database
 # !количество
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["количество"], commands_prefix=['!'])
 async def wb_count(message: types.Message):
-	text = f"{pg.username(message.from_user.id)} Количество мата в БД: {len(BW)}🙂"
-	await message.answer(text=text)
+	counter = f"{pg.username(message.from_user.id)} Количество мата в БД: {len(BW)}🙂"
+	await message.answer(text=counter)
 
 # Add event
 # !добавитьивент Ивент
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["добавитьивент"], commands_prefix=['!'])
 async def event_add(message: types.Message):
-	text = message.text.split()
-	textt = str()
+	mtext = get_arguments(message.text)
 	events = pg.events()
-	if events == None:
-		events = list()
-	for t in text[1:]:
-		textt += t + ' '
-	if textt.strip() not in events:
-		pg.event_add(textt.strip())
-		await message.answer(text=f"🆕<b>Создан новый ивент:</b>\n«<code>{textt.strip()}</code>»", parse_mode="HTML")
+	event = ' '.join(map(str, mtext))
+	if event not in events:
+		pg.event_add(event)
+		await message.answer(text=f"🆕<b>Создан новый ивент:</b>\n«<code>{event}</code>»", parse_mode="HTML")
 
 # Remove event
 # !убратьивент Ивент
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["убратьивент"], commands_prefix=['!'])
 async def event_remove(message: types.Message):
-	text = message.text.split()
-	textt = str()
+	mtext = get_arguments(message.text)
 	events = pg.events()
-	if events == None:
-		events = list()
-	for t in text[1:]:
-		textt += t + ' '
-	if textt.strip() in events:
-		pg.event_remove(textt.strip())
-		await message.answer(text=f"🆕<b>Удалён ивент:</b>\n«<code>{textt.strip()}</code>»", parse_mode="HTML")
+	event = ' '.join(map(str, mtext))
+	if event in events:
+		pg.event_remove(event)
+		await message.answer(text=f"🆕<b>Удалён ивент:</b>\n«<code>{event}</code>»", parse_mode="HTML")
 
 # Next items for user
 # !задания
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["задания", "квесты", "наказания"], commands_prefix=['!'])
 async def items_command(message: types.Message):
-	a = "<b>Грядущие задания:</b> \n\n"
+	items = "<b>Грядущие задания:</b> \n\n"
 	tlist = sorted(pg.items(), key=lambda x: x[1])
 	for t in tlist:
 		if pg.message(message.from_user.id)[1] > int(t[1]):
 			pass
 		else:
-			a += f"{t[1]} — <code>{t[0]}</code>\n"
-	await message.answer(text=f"{pg.username(message.from_user.id)} {a}", parse_mode="HTML")
+			items += f"{t[1]} — <code>{t[0]}</code>\n"
+	await message.answer(text=f"{pg.username(message.from_user.id)} {items}", parse_mode="HTML")
 
 # All events
 # !ивенты
@@ -377,9 +360,8 @@ async def items_command(message: types.Message):
 async def events_command(message: types.Message):
 	text = "<b>Ивенты:</b>\n"
 	events = pg.events()
-	if events != None:
-		for e in events:
-			text += "\n<i>" + e + "</i>"
+	for e in events:
+		text += "\n<i>" + e + "</i>"
 	await message.answer(text=text, parse_mode="HTML")
 
 # All commands
@@ -396,24 +378,22 @@ async def help_command(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["даилинет"], commands_prefix=['!'])
 async def yesorno_command(message: types.Message):
 	ran = randint(1, 6)
-	if ran in (1, 3, 5):
+	if ran % 2 == 1:
 		text = choice(txt.YES_LIST)
-	elif ran in (2, 4, 6):
+	elif ran % 2 == 0:
 		text = choice(txt.NO_LIST)
-	await message.answer(text=f"{pg.username(message.from_user.id)} {text}")
+	await message.reply(text={text})
 
 # Chance of event
 # !шанс Событие
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["шанс"], commands_prefix=['!'])
 async def chance_command(message: types.Message):
-	text = str()
-	mtext = message.text.split()
+	mtext = get_arguments(message.text)
 	if len(mtext) < 2:
 		return 0
-	for t in mtext[1:]:
-		text += t + ' '
-	chance_text = f"{pg.username(message.from_user.id)} шанс того, что {text}{randint(0, 100)}%"
-	await message.answer(text=chance_text)
+	text = ' '.join(map(str, mtext))
+	chance_text = f"Шанс того, что {text}{randint(0, 100)}%"
+	await message.reply(text=chance_text)
 
 # Top of used words
 # !словарь 13
@@ -450,45 +430,54 @@ async def watchlist_command(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["оценка"], commands_prefix=['!'])
 async def rate_command(message: types.Message):
 	sheet_instance = sheet.get_worksheet(0)
-	film = set()
-	notseen = set()
 	req = sheet_instance.get_all_records()
+	film_markup = types.InlineKeyboardMarkup(row_width=4)
+	film = set()
+	fsearch = list()
 	for r in req[5:]:
 		if r['status'] == "yep":
 			film.add(r["name"])
-		elif r['status'] == "badyep":
-			notseen.add(r["name"])
 	user_id = message.from_user.id
-	mtext = message.text.split()
-	urate = mtext[1]
+	mtext = get_arguments(message.text)
+	urate = mtext[0]
+	if not urate.isdigit():
+		await message.answer("Оценка должна быть числом")
+		return 0
 	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
-	name = ' '.join(map(str, mtext[2:]))
-	notseen_ratio = process.extract(name, notseen)
-	for r in notseen_ratio:
-		if r[1] > 90:
-			await message.answer(f"Вы ещё не смотрели {r[0]}")
-			return 0
+	name = ' '.join(map(str, mtext[1:]))
 	ratio = process.extract(name, film)
 	for r in ratio:
-		if r[1] > 90:
-			name = r[0]
-			break
-	try:
-		frow = sheet_instance.find(query=name, in_column=2).row
-		sheet_instance.update_cell(row=frow, col=ucol, value=urate)
-		await message.answer(f"Поставлена оценка {urate} фильму {name} от {pg.username(user_id)}")
-	except gspread.exceptions.CellNotFound as e:
-		await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+		if r[1] > 75:
+			fsearch.append(r[0])
+	if len(fsearch) > 1:
+		for f in sorted(fsearch, key=lambda x: x[-5:]):
+			print(f"{urate}-{f}-{user_id}")
+			film_button = types.InlineKeyboardButton(text=f, callback_data=f"{urate}-{f}-{user_id}")
+			film_markup.add(film_button)
+		await message.answer(text="Нашёл несколько фильмов:", reply_markup=film_markup)
+	elif len(fsearch) < 2:
+		if len(fsearch) == 0:
+			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+			return 0
+		try:
+			frow = sheet_instance.find(query=fsearch[0], in_column=2).row
+			sheet_instance.update_cell(row=frow, col=ucol, value=urate)
+			await message.answer(f"Поставлена оценка {urate} фильму {fsearch[0]} от {pg.username(user_id)}")
+		except gspread.exceptions.CellNotFound as e:
+			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
 # Self mute
 # !табуретка 10000
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["табуретка"], commands_prefix=['!'])
 async def selfmute_command(message: types.Message):
 	now = int(datetime.now().timestamp())
-	if len(message.text.split()) > 1 and message.text.split()[1].isdigit():
+	mtext = get_arguments(message.text)
+	if len(mtext) > 1 and mtext[0].isdigit():
 		args = int(message.text.split()[1])
 		args = ceil(args / 60) * 60
 		fdate = now + args
+	else:
+		fdate = now + 60
 	if message.from_user.id not in admin_users:
 		await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id, can_send_messages=False, until_date=fdate)
 	await message.answer(text=f"{pg.username(message.from_user.id)} был замучен на {args/60} минут")
@@ -500,7 +489,7 @@ async def usercommands(message: types.Message):
 	cmd = message.text[1:].split()
 	if cmd[0] in CL:
 		text = pg.commands_text()[pg.commands().index(cmd[0])]
-		await message.answer(text=f"{pg.username(message.from_user.id)} {text}", parse_mode="HTML", disable_web_page_preview=True)
+		await message.reply(text=text, parse_mode="HTML", disable_web_page_preview=True)
 
 # Ban-word Filter
 @dp.message_handler(lambda message: message.from_user.id in users)
@@ -536,10 +525,6 @@ async def filter(message: types.Message):
 				with open(f"gif/{randint(1, 3)}.gif", "rb") as gif:
 					await message.reply_video(gif, caption="ни грути. цём")
 					gif.close()
-			if t in ("бот", "слит"):
-				bt += 1
-			if bt == 2:
-				await message.answer("Иди нахуй, быдло, бот здесь я")
 			if t != None:
 				if t in dw and len(t) > 1:
 					pg.dictionary_set(t, pg.dictionary_count(t)+1)
@@ -644,12 +629,35 @@ async def edited_message_filter(message: types.Message):
 # Messages for users who are not in users list
 @dp.message_handler(lambda message: message.from_user.id not in users, content_types=types.message.ContentType.ANY)
 async def messages(message: types.Message):
-	await bot.send_message(chat_id=users[4], text=message.from_user.id)
+	await bot.send_message(chat_id=admin_users[0], text=message.from_user.id)
 	link_markup = types.inline_keyboard.InlineKeyboardMarkup(row_width=2)
 	author_button = types.inline_keyboard.InlineKeyboardButton(text="Связаться с автором", url="https://t.me/rvbsm")
 	# _button = types.inline_keyboard.InlineKeyboardButton(text="", url="")
 	link_markup.add(author_button)
 	#await message.answer(text="<b>Полезные ссылки:</b>", parse_mode="HTML", reply_markup=link_markup)
+
+@dp.callback_query_handler()
+async def film_callback(call: types.callback_query):
+	sheet_instance = sheet.get_worksheet(0)
+	callback = call.data.split('-')
+	user_id = int(callback[2])
+	if user_id == call.from_user.id or user_id in admin_users:
+		if callback[0].isdigit():	
+			
+			ucol = sheet_instance.find(query=str(user_id), in_row=1).col
+			urate = callback[0]
+			ufilm = callback[1]
+			frow = sheet_instance.find(query=ufilm, in_column=2).row
+			sheet_instance.update_cell(row=frow, col=ucol, value=urate)
+			await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f"Поставлена оценка {urate} фильму {ufilm} от {pg.username(user_id)}")
+
+		elif callback[0] == "watched":
+			frow = sheet_instance.find(query=callback[1], in_column=2).row
+			sheet_instance.update(f"A{frow}", "yep")
+			sheet_instance.update(f"F{frow}", datetime.now().strftime("%d.%m.%Y"))
+			await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Как вам фильм, понравился?")
+	else:
+		await call.answer(text=f"Ты не {pg.username(user_id)}")
 
 # Database connecting
 async def db_update():
