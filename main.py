@@ -62,7 +62,7 @@ async def point_add(message: types.Message):
 	mtext = get_arguments(message.text)
 	items = pg.items()
 	oldm = pg.message(message.reply_to_message["from"]["id"])[1] + 1
-	if len(mtext) > 1 and mtext[0].isdigit():
+	if mtext[0].isdigit():
 		n = int(mtext[0])
 	else:
 		n = 1
@@ -87,7 +87,7 @@ async def point_remove(message: types.Message):
 	ulist = list()
 	table = txt.TABLE_MESSAGE
 	mtext = get_arguments(message.text)
-	if len(mtext) > 1 and mtext[0].isdigit():
+	if mtext[0].isdigit():
 		n = int(mtext[0])
 	else:
 		n = 1
