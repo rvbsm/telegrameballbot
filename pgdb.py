@@ -143,3 +143,13 @@ class DataBase:
 	def log_add(self, message_id: int, user_id: int, percentage: int, word: str, similar: str):
 		self.curpg.execute('''INSERT INTO "logs" ("date", "time", "message_id", "user.id", "percentage", "word", "similar") VALUES (CURRENT_DATE, LOCALTIME(0), %s, %s, %s, %s, %s)''', (message_id, user_id, percentage, word, similar))
 		return True
+
+	def poll_answer(self, user_id: int):
+		self.curpg.execute('''SELECT "poll_answer" FROM "user" WHERE "user.id" = %s''', (user_id,))
+		result = self.curpg.fetchall()
+		for r in result:
+			return r[0]
+
+	def poll_answer_set(self, user_id: int, poll_answer: int):
+		self.curpg.execute('''UPDATE "user" SET "poll_answer" = %s WHERE "user.id" = %s''', (poll_answer, user_id))
+		return True

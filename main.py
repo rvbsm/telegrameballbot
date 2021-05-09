@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from aiogram import Dispatcher, Bot, executor, types # Aiogram
 from aiogram.utils.executor import start_webhook # Webhook
+from aiogram.types import PollAnswer # PollAnswers
 from pgdb import DataBase # Postgresql database
 from random import choice, randint # Pseudo-random
 from fuzzywuzzy import process # Comparison and similarity
@@ -13,6 +14,7 @@ import conf # Configuration
 """
 ПЛАНЫ:
 
+Прогнозы
 Отвечать на 'бот'
 ? Квесты
 ? Для общего пользования
@@ -286,6 +288,18 @@ async def admin_rate_command(message: types.Message):
 			await message.answer(f"Поставлена оценка {urate} фильму {fsearch[0]} от {pg.username(user_id)}")
 		except gspread.exceptions.CellNotFound as e:
 			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
+
+@dp.message_handler(lambda message: message.from_user.id in admin_users, content_types=types.message.ContentType.POLL)
+async def poll(message: types.Message):
+	print(len(message.poll.options))
+	if message.poll.question.split(':')[0] == "Прогноз" and len(message.poll.options) == 2:
+		await message.pin()
+		pg.poll_answer_set(1708019201, message.poll.id)
+		await message.answer(f"Начат прогноз«{message.poll.question.split(':')[1]}»")
+
+@dp.poll_answer_handler()
+async def poll_answer(poll: types.PollAnswer):
+	print(poll)
 
 # Add user-command
 # !set привет Привет, человек
@@ -625,6 +639,10 @@ async def edited_message_filter(message: types.Message):
 						pass
 						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+
+@dp.message_handler(content_types=types.message.ContentType.LEFT_CHAT_MEMBER)
+async def left_member(message: types.Message):
+	await message.answer("Верните эту придурошную обратно")
 
 # Messages for users who are not in users list
 @dp.message_handler(lambda message: message.from_user.id not in users, content_types=types.message.ContentType.ANY)
