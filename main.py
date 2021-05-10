@@ -339,9 +339,10 @@ async def results(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in users, state=Forecast.Bet)
 async def bet_message(message: types.Message, state: FSMContext):
 	mtext = message.text.split()
+	table = txt.TABLE_MESSAGE
 	blueList = set()
 	redList = set()
-	ulist = set()
+	ulist = list()
 	blueAll = redAll = 0
 	if mtext[0].isdigit():
 		if int(mtext[0]) < pg.message(message.from_user.id)[1]:
@@ -353,7 +354,7 @@ async def bet_message(message: types.Message, state: FSMContext):
 			ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 			for f in ulist:
 				table += f"{pg.username(f[0])} — {f[1]}\n"
-			#await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+			await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 			for u in users:
 				if pg.poll_answer(u) == 0:
 					blueList.add(u)
