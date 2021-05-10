@@ -340,7 +340,11 @@ async def bet_message(message: types.Message, state: FSMContext):
 				redCoef = bluePerc/redPerc
 			else:
 				redCoef = 0
+<<<<<<< HEAD
 			await bot.edit_message_text(chat_id=chat[0], message_id=pg.poll_answer(1708019201), text=txt.FORECAST_MESSAGE.format(blueAll, redAll, blueCoef, redCoef), parse_mode="HTML")
+=======
+			await bot.edit_message_text(chat_id=message.chat.id, message_id=pg.poll_answer(1708019201), text=txt.FORECAST_MESSAGE.format(blueAll, redAll, blueCoef, redCoef), parse_mode="HTML")
+>>>>>>> ebalbot/master
 			await state.finish()
 		else:
 			await message.answer("У Вас нет столько баллов")
