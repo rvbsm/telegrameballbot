@@ -345,7 +345,7 @@ async def bet_message(message: types.Message, state: FSMContext):
 	if mtext[0].isdigit():
 		if int(mtext[0]) < pg.message(message.from_user.id)[1]:
 			pg.bet_set(message.from_user.id, mtext[0])
-			pg.message_set(pg.message(message.from_user.id) - int(mtext[0]), message.from_user.id)
+			pg.message_set(pg.message(message.from_user.id)[1] - int(mtext[0]), message.from_user.id)
 			await message.answer(f"Поздравляю, вы поставили {mtext[0]} Е-баллов!")
 			for u in users:
 				ulist.append(pg.message(u))
