@@ -537,6 +537,7 @@ async def selfmute_command(message: types.Message):
 		args = ceil(args / 60) * 60
 		fdate = now + args
 	else:
+		args = 60
 		fdate = now + 60
 	if message.from_user.id not in admin_users:
 		await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id, can_send_messages=False, until_date=fdate)
