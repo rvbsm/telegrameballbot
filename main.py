@@ -341,6 +341,7 @@ async def bet_message(message: types.Message, state: FSMContext):
 	mtext = message.text.split()
 	blueList = set()
 	redList = set()
+	ulist = set()
 	blueAll = redAll = 0
 	if mtext[0].isdigit():
 		if int(mtext[0]) < pg.message(message.from_user.id)[1]:
