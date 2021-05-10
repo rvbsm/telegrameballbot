@@ -2,6 +2,9 @@
 from aiogram import Dispatcher, Bot, executor, types # Aiogram
 from aiogram.utils.executor import start_webhook # Webhook
 from aiogram.types import PollAnswer # PollAnswers
+from aiogram.dispatcher.filters.state import State, StatesGroup # States
+from aiogram.dispatcher import FSMContext
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from pgdb import DataBase # Postgresql database
 from random import choice, randint # Pseudo-random
 from fuzzywuzzy import process # Comparison and similarity
@@ -23,8 +26,10 @@ import conf # Configuration
 client = gspread.authorize(conf.creds) # Authorization to Google Sheets API
 sheet = client.open(conf.GSHEETNAME) # Opening sheet
 bot = Bot(token=conf.API_TOKEN) # Bot
-dp = Dispatcher(bot) # Dispatcher
+dp = Dispatcher(bot, storage=MemoryStorage()) # Dispatcher
 
+class Forecast(StatesGroup):
+	Bet = State()
 
 def get_arguments(text):
 	return text.split()[1:]
@@ -289,17 +294,58 @@ async def admin_rate_command(message: types.Message):
 		except gspread.exceptions.CellNotFound as e:
 			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
-@dp.message_handler(lambda message: message.from_user.id in admin_users, content_types=types.message.ContentType.POLL)
+# Send poll with forecast
+# !прогноз Кто победит? Синие Красные
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["прогноз"], commands_prefix=['!'])
 async def poll(message: types.Message):
-	print(len(message.poll.options))
-	if message.poll.question.split(':')[0] == "Прогноз" and len(message.poll.options) == 2:
-		await message.pin()
-		pg.poll_answer_set(1708019201, message.poll.id)
-		await message.answer(f"Начат прогноз«{message.poll.question.split(':')[1]}»")
+	mtext = get_arguments(message.text)
+	question = ' '.join(map(str, mtext[:-2]))
+	options = mtext[-2:]
+	if not question or len(options) != 2:
+		await message.answer("Вы забыли аргументы\nПример: <code>!прогноз Кто победит? Синие Красные</code>", parse_mode="HTML")
+		return
 
-@dp.poll_answer_handler()
-async def poll_answer(poll: types.PollAnswer):
-	print(poll)
+	await message.answer(text=txt.FORECAST_MESSAGE.format(0, 0, 0, 0, 0, 0), parse_mode="HTML")
+	pg.poll_answer_set(1708019201, message.message_id + 1)
+	await bot.send_poll(chat_id=message.chat.id, question=question, options=options, is_anonymous=False, open_period=300)
+
+# Get bet from user
+# 300
+@dp.message_handler(lambda message: message.from_user.id in users, state=Forecast.Bet)
+async def bet_message(message: types.Message, state: FSMContext):
+	mtext = message.text.split()
+	blueList = set()
+	redList = set()
+	blueAll = redAll = 0
+	if mtext[0].isdigit():
+		if int(mtext[0]) < pg.message(message.from_user.id)[1]:
+			pg.bet_set(message.from_user.id, mtext[0])
+			await message.answer(f"Поздравляю, вы поставили {mtext[0]} Е-баллов!")
+			for u in users:
+				if pg.poll_answer(u) == 0:
+					blueList.add(u)
+				elif pg.poll_answer(u) == 1:
+					redList.add(u)
+			for b in blueList:
+				blueAll += int(pg.bet(b))
+			for r in redList:
+				redAll += int(pg.bet(r))
+			bluePerc = blueAll/(redAll+blueAll)
+			redPerc = redAll/(redAll+blueAll)
+			if blueAll != 0:
+				blueCoef = redPerc/bluePerc
+			else:
+				blueCoef = 0
+			if redAll != 0:
+				redCoef = bluePerc/redPerc
+			else:
+				redCoef = 0
+			await bot.edit_message_text(chat_id=message.chat.id, message_id=pg.poll_answer(1708019201), text=txt.FORECAST_MESSAGE.format(blueAll, redAll, blueCoef, redCoef), parse_mode="HTML")
+			await state.finish()
+		else:
+			await message.answer("У Вас нет столько баллов")
+	else:
+		await message.answer("Ставка должна быть числом")
 
 # Add user-command
 # !set привет Привет, человек
@@ -654,7 +700,7 @@ async def messages(message: types.Message):
 	link_markup.add(author_button)
 	#await message.answer(text="<b>Полезные ссылки:</b>", parse_mode="HTML", reply_markup=link_markup)
 
-@dp.callback_query_handler()
+@dp.callback_query_handler(lambda call: call.from_user.id in users)
 async def film_callback(call: types.callback_query):
 	sheet_instance = sheet.get_worksheet(0)
 	callback = call.data.split('-')
@@ -676,6 +722,13 @@ async def film_callback(call: types.callback_query):
 			await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Как вам фильм, понравился?")
 	else:
 		await call.answer(text=f"Ты не {pg.username(user_id)}")
+
+@dp.poll_answer_handler(lambda poll_answer: poll_answer.user.id in users)
+async def forecast_answer(poll_answer: types.PollAnswer):
+	if len(poll_answer.option_ids) == 1:
+		pg.poll_answer_set(poll_answer.user.id, poll_answer.option_ids[0])
+		await Forecast.Bet.set()
+		await bot.send_message(chat_id=poll_answer.user.id, text="Сколько баллов ставишь?")
 
 # Database connecting
 async def db_update():

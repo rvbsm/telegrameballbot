@@ -153,3 +153,13 @@ class DataBase:
 	def poll_answer_set(self, user_id: int, poll_answer: int):
 		self.curpg.execute('''UPDATE "user" SET "poll_answer" = %s WHERE "user.id" = %s''', (poll_answer, user_id))
 		return True
+
+	def bet(self, user_id: int):
+		self.curpg.execute('''SELECT "bet" FROM "user" WHERE "user.id" = %s''', (user_id,))
+		result = self.curpg.fetchall()
+		for r in result:
+			return r[0]
+
+	def bet_set(self, user_id: int, bet: int):
+		self.curpg.execute('''UPDATE "user" SET "bet" = %s WHERE "user.id" = %s''', (bet, user_id))
+		return True
