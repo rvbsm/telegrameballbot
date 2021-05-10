@@ -315,6 +315,7 @@ async def results(message: types.Message):
 	mtext = message.text[1:]
 	blueList = set()
 	redList = set()
+	blueAll = redAll = 0
 	await message.answer(f"Победили {mtext}, поздравляю, разбирайте Е-баллы")
 	for u in users:
 		if pg.poll_answer(u) == 0:
