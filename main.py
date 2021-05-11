@@ -569,7 +569,7 @@ async def rate_command(message: types.Message):
 async def selfmute_command(message: types.Message):
 	now = int(datetime.now().timestamp())
 	mtext = get_arguments(message.text)
-	if len(mtext) > 1 and mtext[0].isdigit():
+	if len(mtext) == 1 and mtext[0].isdigit():
 		args = int(message.text.split()[1])
 		args = ceil(args / 60) * 60
 		fdate = now + args
