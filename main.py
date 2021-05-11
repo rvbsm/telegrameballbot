@@ -114,7 +114,7 @@ async def banword_add(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	mtext = get_arguments(message.text)
 	if len(mtext) < 1:
-		return 0
+		return
 	for w in mtext:
 		for l in w:
 			if w not in BW:
@@ -133,7 +133,7 @@ async def wb_remove(message: types.Message):
 	await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 	mtext = get_arguments(message.text)
 	if len(mtext) < 1:
-		return 0
+		return
 	for w in mtext:
 		if w in BW:
 			pg.word_remove(w)
@@ -146,7 +146,7 @@ async def wb_remove(message: types.Message):
 async def item_add(message: types.Message):
 	mtext = get_arguments(message.text)
 	if len(mtext) < 2:
-		return 0
+		return
 	desc = ' '.join(map(str, mtext[2:]))
 	pg.item_add(mtext[0], mtext[1], desc)
 	await bot.send_message(chat_id=chat[0], text=f"<b>🆕Новое задание:</b> «<code>{mtext[0]}</code>»", parse_mode="HTML")
@@ -157,7 +157,7 @@ async def item_add(message: types.Message):
 async def item_remove(message: types.Message):
 	mtext = get_arguments(message.text)
 	if len(text) < 1:
-		return 0
+		return
 	pg.item_remove(mtext[1])
 	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{mtext[0]}</code>»", parse_mode="HTML")
 
@@ -180,7 +180,7 @@ async def logs_command(message: types.Message):
 	except:
 		n = 25
 	if n > 50:
-		return 0
+		return
 	logs = sorted(pg.logs(), key=lambda x: x[2], reverse=True)
 	logs_text = f"<b>Последние {n} бан-вордов:</b>"
 	for l in logs[0:n]:
@@ -193,7 +193,7 @@ async def logs_command(message: types.Message):
 async def sendmessage_command(message: types.Message):
 	mtext = get_arguments(message.text)
 	if len(mtext) < 1:
-		return 0
+		return
 	msg_text = ' '.join(map(str, mtext))
 	await bot.send_message(chat_id=chat[0], text=msg_text)
 
@@ -271,7 +271,7 @@ async def admin_rate_command(message: types.Message):
 	urate = mtext[0]
 	if not urate.isdigit():
 		await message.answer("Оценка должна быть числом")
-		return 0
+		return
 	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
 	name = ' '.join(map(str, mtext[1:]))
 	ratio = process.extract(name, film)
@@ -286,7 +286,7 @@ async def admin_rate_command(message: types.Message):
 	elif len(fsearch) < 2:
 		if len(fsearch) == 0:
 			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
-			return 0
+			return
 		try:
 			frow = sheet_instance.find(query=fsearch[0], in_column=2).row
 			sheet_instance.update_cell(row=frow, col=ucol, value=urate)
@@ -298,8 +298,6 @@ async def admin_rate_command(message: types.Message):
 # !прогноз Кто победит? Синие Красные
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["прогноз"], commands_prefix=['!'])
 async def poll(message: types.Message):
-	for u in users:
-		pg.bet_set(u, 0)
 	mtext = get_arguments(message.text)
 	question = ' '.join(map(str, mtext[:-2]))
 	options = mtext[-2:]
@@ -307,14 +305,19 @@ async def poll(message: types.Message):
 		await message.answer("Вы забыли аргументы\nПример: <code>!прогноз Кто победит? Синие Красные</code>", parse_mode="HTML")
 		return
 	await message.answer(text=txt.FORECAST_MESSAGE.format(0, 0, 0, 0, 0, 0), parse_mode="HTML")
+	for u in users:
+		pg.bet_set(u, 0)
+		pg.poll_answer_set(u, 2)
 	pg.poll_answer_set(1708019201, message.message_id + 1)
 	await bot.send_poll(chat_id=message.chat.id, question=question, options=options, is_anonymous=False, open_period=300)
 
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["красные", "синие"], commands_prefix=['!'])
 async def results(message: types.Message):
 	mtext = message.text[1:]
+	table = txt.TABLE_MESSAGE
 	blueList = set()
 	redList = set()
+	ulist = list()
 	blueAll = redAll = 0
 	await message.answer(f"Победили {mtext}, поздравляю, разбирайте Е-баллы")
 	for u in users:
@@ -326,14 +329,22 @@ async def results(message: types.Message):
 		blueAll += int(pg.bet(b))
 	for r in redList:
 		redAll += int(pg.bet(r))
-	blueCoef = round(1+redPerc/bluePerc, 2)
-	redCoef = round(1+bluePerc/redPerc, 2)
+	if bluePerc != 0:
+		blueCoef = round(1+redPerc/bluePerc, 2)
+	if redPerc != 0:
+		redCoef = round(1+bluePerc/redPerc, 2)
 	if message.text[1:] == "красные":
 		for b in blueList:
 			pg.message_set(pg.message(b)+pg.bet(b)*blueCoef, r)
 	elif message.text[1:] == "синие":
 		for r in redList:
 			pg.message_set(pg.message(r)+pg.bet(r)*redCoef, r)
+	for u in users:
+		ulist.append(pg.message(u))
+	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
+	for f in ulist:
+		table += f"{pg.username(f[0])} — {f[1]}\n"
+	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 # Get bet from user
 # 300
@@ -391,7 +402,7 @@ async def usercommand_add(message: types.Message):
 	global CL
 	mtext = get_arguments(message.text)
 	if len(mtext) < 2:
-		return 0
+		return
 	text = ' '.join(map(str, mtext[1:]))
 	pg.command_add(mtext[0], text)
 	CL = pg.commands()
@@ -404,7 +415,7 @@ async def usercommand_remove(message: types.Message):
 	global CL
 	mtext = get_arguments(message.text)
 	if len(mtext) < 1:
-		return 0
+		return
 	pg.command_remove(mtext[0])
 	CL = pg.commands()
 	await bot.send_message(chat_id=chat[0], text=f"🗑Удалена команда <code>!{mtext[0]}</code>", parse_mode="HTML")
@@ -487,7 +498,7 @@ async def yesorno_command(message: types.Message):
 async def chance_command(message: types.Message):
 	mtext = get_arguments(message.text)
 	if len(mtext) < 2:
-		return 0
+		return
 	text = ' '.join(map(str, mtext))
 	chance_text = f"Шанс того, что {text} {randint(0, 100)}%"
 	await message.reply(text=chance_text)
@@ -501,7 +512,7 @@ async def dictionary_command(message: types.Message):
 	except:
 		top = 10
 	if top > 25:
-		return 0
+		return
 	dictl = sorted(pg.dictionary(), key=lambda x: x[1], reverse=True)
 	dictionary_text = f"<b>Топ-{top} слов:</b>"
 	for d in dictl[0:top]:
@@ -539,7 +550,7 @@ async def rate_command(message: types.Message):
 	urate = mtext[0]
 	if not urate.isdigit():
 		await message.answer("Оценка должна быть числом")
-		return 0
+		return
 	ucol = sheet_instance.find(query=str(user_id), in_row=1).col
 	name = ' '.join(map(str, mtext[1:]))
 	ratio = process.extract(name, film)
@@ -555,7 +566,7 @@ async def rate_command(message: types.Message):
 	elif len(fsearch) < 2:
 		if len(fsearch) == 0:
 			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
-			return 0
+			return
 		try:
 			frow = sheet_instance.find(query=fsearch[0], in_column=2).row
 			sheet_instance.update_cell(row=frow, col=ucol, value=urate)
