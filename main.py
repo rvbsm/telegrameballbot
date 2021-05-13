@@ -154,7 +154,8 @@ async def item_remove(message: types.Message):
 	mtext = get_arguments(message.text)
 	if len(mtext) < 1:
 		return
-	pg.item_remove(mtext[1])
+	for i in item:
+		pg.item_remove(i)
 	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{mtext[0]}</code>»", parse_mode="HTML")
 
 # Description for all items
