@@ -80,10 +80,6 @@ async def point_add(message: types.Message):
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		table += f"{pg.username(f[0])} — {f[1]}\n"
-		if message.reply_to_message["from"]["id"] == f[0]:
-			for t in items:
-					if t[1] in nlist:
-						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=pg.message(1708019201)[1], parse_mode="HTML")
 
 # Take n-points from user
@@ -656,11 +652,6 @@ async def filter(message: types.Message):
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 		for f in ulist:
 			table += f"{pg.username(f[0])} — {f[1]}\n"
-			if message.from_user.id == f[0]:
-				for t in items:
-					if t[1] in nlist:
-						pass
-						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 	# ~0,13% chance
@@ -728,11 +719,6 @@ async def edited_message_filter(message: types.Message):
 		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 		for f in ulist:
 			table += f"{pg.username(f[0])} — {f[1]}\n"
-			if message.from_user.id == f[0]:
-				for t in items:
-					if t[1] in nlist:
-						pass
-						await bot.send_message(chat_id=chat[0], text=f"{pg.username(f[0])} <b>Вам выпало задание</b> «{t[0]}»:\n<i>{t[2]}</i>", parse_mode="HTML")
 		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 @dp.message_handler(content_types=types.message.ContentType.LEFT_CHAT_MEMBER)
