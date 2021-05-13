@@ -447,15 +447,12 @@ async def event_remove(message: types.Message):
 
 # Next items for user
 # !задания
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["задания", "квесты", "наказания"], commands_prefix=['!'])
+@dp.message_handler(lambda message: message.from_user.id in users, commands=["предметы", "товары"], commands_prefix=['!'])
 async def items_command(message: types.Message):
-	items = "<b>Грядущие задания:</b> \n\n"
+	items = "ы)"
 	tlist = sorted(pg.items(), key=lambda x: x[1])
-	for t in tlist:
-		if pg.message(message.from_user.id)[1] > int(t[1]):
-			pass
-		else:
-			items += f"{t[1]} — <code>{t[0]}</code>\n"
+	for t in tlist if tlist:
+		items += f"{t[1]} — <code>{t[0]}</code>\n"
 	await message.answer(text=f"{pg.username(message.from_user.id)} {items}", parse_mode="HTML")
 
 # All events
