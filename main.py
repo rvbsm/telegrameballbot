@@ -451,8 +451,9 @@ async def event_remove(message: types.Message):
 async def items_command(message: types.Message):
 	items = "ы)"
 	tlist = sorted(pg.items(), key=lambda x: x[1])
-	for t in tlist if tlist:
-		items += f"{t[1]} — <code>{t[0]}</code>\n"
+	if tlist:
+		for t in tlist:
+			items += f"{t[1]} — <code>{t[0]}</code>\n"
 	await message.answer(text=f"{pg.username(message.from_user.id)} {items}", parse_mode="HTML")
 
 # All events
