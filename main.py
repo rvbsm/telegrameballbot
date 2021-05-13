@@ -152,7 +152,7 @@ async def item_add(message: types.Message):
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["убратьпредмет"], commands_prefix=['!'])
 async def item_remove(message: types.Message):
 	mtext = get_arguments(message.text)
-	if len(text) < 1:
+	if len(mtext) < 1:
 		return
 	pg.item_remove(mtext[1])
 	await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{mtext[0]}</code>»", parse_mode="HTML")
