@@ -17,8 +17,6 @@ import conf # Configuration
 """
 ПЛАНЫ:
 
-Прогнозы
-Отвечать на 'бот'
 ? Квесты
 ? Для общего пользования
 """
@@ -192,7 +190,15 @@ async def sendmessage_command(message: types.Message):
 	if len(mtext) < 1:
 		return
 	msg_text = ' '.join(map(str, mtext))
-	await bot.send_message(chat_id=chat[0], text=msg_text)
+	await bot.send_message(chat_id=chat[0], text=msg_text, parse_mode="HTML")
+
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["тест"], commands_prefix=['!'])
+async def sendmessage_test(message: types.Message):
+	mtext = get_arguments(message.text)
+	if len(mtext) < 1:
+		return
+	msg_text = ' '.join(map(str, mtext))
+	await message.answer(text=msg_text, parse_mode="HTML")
 
 # Add film to Google Sheets
 # !добавитьфильм https://www.kinopoisk.ru/film/12198/ 8.3 триллер/детектив Игра (1997)
