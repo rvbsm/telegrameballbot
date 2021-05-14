@@ -298,8 +298,8 @@ async def poll(message: types.Message):
 	mtext = get_arguments(message.text)
 	question = ' '.join(map(str, mtext[:-2]))
 	options = mtext[-2:]
-	global a
-	a = 1
+	global forecast_poll
+	forecast_poll = True
 	if not question or len(options) != 2:
 		await message.answer("Вы забыли аргументы\nПример: <code>!прогноз Кто победит? Синие Красные</code>", parse_mode="HTML")
 		return
@@ -312,8 +312,8 @@ async def poll(message: types.Message):
 
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["красные", "синие"], commands_prefix=['!'])
 async def results(message: types.Message):
-	global a
-	a = 0
+	global forecast_poll
+	forecast_poll = False
 	mtext = message.text[1:]
 	table = txt.TABLE_MESSAGE
 	blueList = set()
@@ -345,6 +345,22 @@ async def results(message: types.Message):
 	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
 	for f in ulist:
 		table += f"{pg.username(f[0])} — {f[1]}\n"
+	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+
+@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["вернутьбаллы"], commands_prefix=['!'])
+async def stop_poll(message: types.Message):
+	global forecast_poll
+	forecast_poll = False
+	ulist = list()
+	table = txt.TABLE_MESSAGE
+	for u in users:
+		pg.message_set(pg.message(u)+pg.bet(u), u)
+		pg.bet_set(u, 0)
+		ulist.append(pg.message(u))
+	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
+	for f in ulist:
+		table += f"{pg.username(f[0])} — {f[1]}\n"
+	await message.answer(text="Прогноз остановлен, баллы возращаются пользователям")
 	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
 
 # Get bet from user
@@ -761,12 +777,24 @@ async def film_callback(call: types.callback_query):
 	else:
 		await call.answer(text=f"Ты не {pg.username(user_id)}")
 
-@dp.poll_answer_handler(lambda poll_answer: poll_answer.user.id in users)
+@dp.poll_answer_handler(lambda poll_answer: poll_answer.user.id in users and forecast_poll == True)
 async def forecast_answer(poll_answer: types.PollAnswer):
-	if len(poll_answer.option_ids) == 1 and a == 1:
+	if len(poll_answer.option_ids) == 1:
 		pg.poll_answer_set(poll_answer.user.id, poll_answer.option_ids[0])
 		await Forecast.Bet.set()
 		await bot.send_message(chat_id=poll_answer.user.id, text="Сколько баллов ставишь?")
+	elif len(poll_answer.option_ids) == 0:
+		ulist = list()
+		table = txt.TABLE_MESSAGE
+		pg.message_set(pg.message(poll.answer.user.id), poll_answer.user.id)
+		pg.bet_set(poll_answer.user.id, 0)
+		for u in users:
+			ulist.append(pg.message(u))
+		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
+		for f in ulist:
+			table += f"{pg.username(f[0])} — {f[1]}\n"
+		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
+
 
 # Database connecting
 async def db_update():
@@ -779,11 +807,11 @@ async def db_update():
 
 # Set vars
 async def on_startup(dp):
-	global chat, users, admin_users, a
+	global chat, users, admin_users, forecast_poll
 	chat = [-1001400136881]
 	users = [529598217, 932736973, 636619912, 555328241, 200635302, 410275183]
 	admin_users = [200635302, 932736973, 410275183]
-	a = 0
+	forecast_poll = False
 	await bot.delete_webhook(drop_pending_updates=True)
 	await bot.set_webhook(conf.WEBHOOK_URL, drop_pending_updates=True)
 
