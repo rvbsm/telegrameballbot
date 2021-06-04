@@ -14,13 +14,6 @@ import asyncio, logging, os, codecs, re, gspread # other libs
 import message_texts as txt # Messages
 import conf # Configuration
 
-"""
-ПЛАНЫ:
-
-? Квесты
-? Для общего пользования
-"""
-
 client = gspread.authorize(conf.creds) # Authorization to Google Sheets API
 sheet = client.open(conf.GSHEETNAME) # Opening sheet
 bot = Bot(token=conf.API_TOKEN) # Bot
@@ -134,38 +127,6 @@ async def wb_remove(message: types.Message):
 			BW = pg.words()
 			await bot.send_message(chat_id=message.from_user.id, text="Обновлён список запрещёнки. Убрано:\n" + w)
 
-# Add item
-# !добавитьпредмет Задание 821 Описание задания
-@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["добавитьпредмет"], commands_prefix=['!'])
-async def item_add(message: types.Message):
-	mtext = get_arguments(message.text)
-	if len(mtext) < 2:
-		return
-	desc = ' '.join(map(str, mtext[2:]))
-	pg.item_add(mtext[0], mtext[1], desc)
-	await bot.send_message(chat_id=chat[0], text=f"<b>🆕Новое задание:</b> «<code>{mtext[0]}</code>»", parse_mode="HTML")
-
-# Remove item
-# !убратьпредмет Задание
-@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["убратьпредмет"], commands_prefix=['!'])
-async def item_remove(message: types.Message):
-	mtext = get_arguments(message.text)
-	if len(mtext) < 1:
-		return
-	for i in mtext:
-		pg.item_remove(i)
-		await message.answer(text=f"<b>🗑Удалено задание:</b> «<code>{i}</code>»", parse_mode="HTML")
-
-# Description for all items
-# !описание
-@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["описание"], commands_prefix=['!'])
-async def item_description(message: types.Message):
-	tlist = sorted(pg.items(), key=lambda x: x[1])
-	desc_text = "<b>Описание заданий:</b>\n\n"
-	for t in tlist:
-		desc_text += f"{t[1]} <b>{t[0]}</b> — <i>{t[2]}</i>\n"
-	await message.answer(text=desc_text, parse_mode="HTML")
-
 # Last logs
 # !логи 23
 @dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["логи"], commands_prefix=['!'])
@@ -191,14 +152,6 @@ async def sendmessage_command(message: types.Message):
 		return
 	msg_text = ' '.join(map(str, mtext))
 	await bot.send_message(chat_id=chat[0], text=msg_text, parse_mode="HTML")
-
-@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["тест"], commands_prefix=['!'])
-async def sendmessage_test(message: types.Message):
-	mtext = get_arguments(message.text)
-	if len(mtext) < 1:
-		return
-	msg_text = ' '.join(map(str, mtext))
-	await message.answer(text=msg_text, parse_mode="HTML")
 
 # Add film to Google Sheets
 # !добавитьфильм https://www.kinopoisk.ru/film/12198/ 8.3 триллер/детектив Игра (1997)
@@ -297,127 +250,6 @@ async def admin_rate_command(message: types.Message):
 		except gspread.exceptions.CellNotFound as e:
 			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
 
-# Send poll with forecast
-# !прогноз Кто победит? Синие Красные
-@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["прогноз"], commands_prefix=['!'])
-async def poll(message: types.Message):
-	mtext = get_arguments(message.text)
-	question = ' '.join(map(str, mtext[:-2]))
-	options = mtext[-2:]
-	global forecast_poll
-	forecast_poll = True
-	if not question or len(options) != 2:
-		await message.answer("Вы забыли аргументы\nПример: <code>!прогноз Кто победит? Синие Красные</code>", parse_mode="HTML")
-		return
-	await message.answer(text=txt.FORECAST_MESSAGE.format(0, 0, 0, 0, 0, 0), parse_mode="HTML")
-	for u in users:
-		pg.bet_set(u, 0)
-		pg.poll_answer_set(u, 2)
-	pg.poll_answer_set(1708019201, message.message_id + 1)
-	await bot.send_poll(chat_id=message.chat.id, question=question, options=options, is_anonymous=False, open_period=300)
-
-@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["красные", "синие"], commands_prefix=['!'])
-async def results(message: types.Message):
-	global forecast_poll
-	forecast_poll = False
-	mtext = message.text[1:]
-	table = txt.TABLE_MESSAGE
-	blueList = set()
-	redList = set()
-	ulist = list()
-	blueAll = redAll = 0
-	await message.answer(f"Победили {mtext}, поздравляю, разбирайте Е-баллы")
-	for u in users:
-		if pg.poll_answer(u) == 0:
-			blueList.add(u)
-		elif pg.poll_answer(u) == 1:
-			redList.add(u)
-	for b in blueList:
-		blueAll += int(pg.bet(b))
-	for r in redList:
-		redAll += int(pg.bet(r))
-	if bluePerc != 0:
-		blueCoef = round(1+redPerc/bluePerc, 2)
-	if redPerc != 0:
-		redCoef = round(1+bluePerc/redPerc, 2)
-	if message.text[1:] == "красные":
-		for b in blueList:
-			pg.message_set(pg.message(b)+pg.bet(b)*blueCoef, r)
-	elif message.text[1:] == "синие":
-		for r in redList:
-			pg.message_set(pg.message(r)+pg.bet(r)*redCoef, r)
-	for u in users:
-		ulist.append(pg.message(u))
-	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
-	for f in ulist:
-		table += f"{pg.username(f[0])} — {f[1]}\n"
-	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
-
-@dp.message_handler(lambda message: message.from_user.id in admin_users, commands=["вернутьбаллы"], commands_prefix=['!'])
-async def stop_poll(message: types.Message):
-	global forecast_poll
-	forecast_poll = False
-	ulist = list()
-	table = txt.TABLE_MESSAGE
-	for u in users:
-		pg.message_set(pg.message(u)+pg.bet(u), u)
-		pg.bet_set(u, 0)
-		ulist.append(pg.message(u))
-	ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
-	for f in ulist:
-		table += f"{pg.username(f[0])} — {f[1]}\n"
-	await message.answer(text="Прогноз остановлен, баллы возращаются пользователям")
-	await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
-
-# Get bet from user
-# 300
-@dp.message_handler(lambda message: message.from_user.id in users, state=Forecast.Bet)
-async def bet_message(message: types.Message, state: FSMContext):
-	mtext = message.text.split()
-	table = txt.TABLE_MESSAGE
-	blueList = set()
-	redList = set()
-	ulist = list()
-	blueAll = redAll = 0
-	if mtext[0].isdigit():
-		if int(mtext[0]) < pg.message(message.from_user.id)[1]:
-			pg.bet_set(message.from_user.id, mtext[0])
-			pg.message_set(pg.message(message.from_user.id)[1] - int(mtext[0]), message.from_user.id)
-			await message.answer(f"Поздравляю, вы поставили {mtext[0]} Е-баллов!")
-			for u in users:
-				ulist.append(pg.message(u))
-			ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
-			for f in ulist:
-				table += f"{pg.username(f[0])} — {f[1]}\n"
-			await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
-			for u in users:
-				if pg.poll_answer(u) == 0:
-					blueList.add(u)
-				elif pg.poll_answer(u) == 1:
-					redList.add(u)
-			for b in blueList:
-				blueAll += int(pg.bet(b))
-			for r in redList:
-				redAll += int(pg.bet(r))
-			bluePerc = blueAll/(redAll+blueAll)
-			redPerc = redAll/(redAll+blueAll)
-			if blueAll != 0:
-				blueCoef = round(1+redPerc/bluePerc, 2)
-			else:
-				blueCoef = 0
-			if redAll != 0:
-				redCoef = round(1+bluePerc/redPerc, 2)
-			else:
-				redCoef = 0
-			await bot.edit_message_text(chat_id=chat[0], message_id=pg.poll_answer(1708019201), text=txt.FORECAST_MESSAGE.format(blueAll, redAll, blueCoef, redCoef), parse_mode="HTML")
-			await state.finish()
-		else:
-			await message.answer("У Вас нет столько баллов🙂")
-	elif message.chat.id in chat:
-		await message.answer(f"{pg.username(message.from_user.id)} ответь боту в личке, а то щас всё пойдёт по одному месту😣")
-	else:
-		await message.answer("Ставка должна быть числом😉")
-
 # Add user-command
 # !set привет Привет, человек
 @dp.message_handler(lambda message: message.from_user.id in users, commands=["set"], commands_prefix=['!'])
@@ -449,49 +281,6 @@ async def usercommand_remove(message: types.Message):
 async def wb_count(message: types.Message):
 	counter = f"{pg.username(message.from_user.id)} Количество мата в БД: {len(BW)}🙂"
 	await message.answer(text=counter)
-
-# Add event
-# !добавитьивент Ивент
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["добавитьивент"], commands_prefix=['!'])
-async def event_add(message: types.Message):
-	mtext = get_arguments(message.text)
-	events = pg.events()
-	event = ' '.join(map(str, mtext))
-	if event not in events:
-		pg.event_add(event)
-		await message.answer(text=f"🆕<b>Создан новый ивент:</b>\n«<code>{event}</code>»", parse_mode="HTML")
-
-# Remove event
-# !убратьивент Ивент
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["убратьивент"], commands_prefix=['!'])
-async def event_remove(message: types.Message):
-	mtext = get_arguments(message.text)
-	events = pg.events()
-	event = ' '.join(map(str, mtext))
-	if event in events:
-		pg.event_remove(event)
-		await message.answer(text=f"🆕<b>Удалён ивент:</b>\n«<code>{event}</code>»", parse_mode="HTML")
-
-# Next items for user
-# !задания
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["предметы", "товары"], commands_prefix=['!'])
-async def items_command(message: types.Message):
-	items = "ы)"
-	tlist = sorted(pg.items(), key=lambda x: x[1])
-	if tlist:
-		for t in tlist:
-			items += f"{t[1]} — <code>{t[0]}</code>\n"
-	await message.answer(text=f"{pg.username(message.from_user.id)} {items}", parse_mode="HTML")
-
-# All events
-# !ивенты
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["ивенты"], commands_prefix=['!'])
-async def events_command(message: types.Message):
-	text = "<b>Ивенты:</b>\n"
-	events = pg.events()
-	for e in events:
-		text += "\n<i>" + e + "</i>"
-	await message.answer(text=text, parse_mode="HTML")
 
 # All commands
 # !команды
@@ -594,23 +383,6 @@ async def rate_command(message: types.Message):
 			await message.answer(f"Поставлена оценка {urate} фильму {fsearch[0]} от {pg.username(user_id)}")
 		except gspread.exceptions.CellNotFound as e:
 			await message.answer("Не нашёл такой фильм в табличке, попробуй указать год")
-
-# Self mute
-# !табуретка 10000
-@dp.message_handler(lambda message: message.from_user.id in users, commands=["табуретка"], commands_prefix=['!'])
-async def selfmute_command(message: types.Message):
-	now = int(datetime.now().timestamp())
-	mtext = get_arguments(message.text)
-	if len(mtext) == 1 and mtext[0].isdigit():
-		args = int(message.text.split()[1])
-		args = ceil(args / 60) * 60
-		fdate = now + args
-	else:
-		args = 60
-		fdate = now + 60
-	if message.from_user.id not in admin_users:
-		await bot.restrict_chat_member(chat_id=chat[0], user_id=message.from_user.id, can_send_messages=False, until_date=fdate)
-	await message.answer(text=f"{pg.username(message.from_user.id)} был замучен на {args/60} минут")
 
 # Usercomands
 # Example: !команда
@@ -765,8 +537,7 @@ async def film_callback(call: types.callback_query):
 	callback = call.data.split('-')
 	user_id = int(callback[2])
 	if user_id == call.from_user.id or user_id in admin_users:
-		if callback[0].isdigit():	
-			
+		if callback[0].isdigit():
 			ucol = sheet_instance.find(query=str(user_id), in_row=1).col
 			urate = callback[0]
 			ufilm = callback[1]
@@ -781,25 +552,6 @@ async def film_callback(call: types.callback_query):
 			await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Как вам фильм, понравился?")
 	else:
 		await call.answer(text=f"Ты не {pg.username(user_id)}")
-
-@dp.poll_answer_handler(lambda poll_answer: poll_answer.user.id in users and forecast_poll == True)
-async def forecast_answer(poll_answer: types.PollAnswer):
-	if len(poll_answer.option_ids) == 1:
-		pg.poll_answer_set(poll_answer.user.id, poll_answer.option_ids[0])
-		await Forecast.Bet.set()
-		await bot.send_message(chat_id=poll_answer.user.id, text="Сколько баллов ставишь?")
-	elif len(poll_answer.option_ids) == 0:
-		ulist = list()
-		table = txt.TABLE_MESSAGE
-		pg.message_set(pg.message(poll.answer.user.id), poll_answer.user.id)
-		pg.bet_set(poll_answer.user.id, 0)
-		for u in users:
-			ulist.append(pg.message(u))
-		ulist = sorted(ulist, key=lambda x: x[1], reverse=True)
-		for f in ulist:
-			table += f"{pg.username(f[0])} — {f[1]}\n"
-		await bot.edit_message_text(chat_id=chat[0], text=table, message_id=int(pg.message(1708019201)[1]), parse_mode="HTML")
-
 
 # Database connecting
 async def db_update():
