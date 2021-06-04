@@ -691,8 +691,7 @@ async def filter(message: types.Message):
 		ran = ranch	
 	prnt = ran**2 == ranch**ranch2
 	if prnt == True:
-		text = choice(pg.events())
-		#await bot.send_message(chat_id=chat[0], text=f"{pg.username(message.from_user.id)} <b>Вам выпал ивент:</b>\n\n{text}", parse_mode="HTML")
+		print("YEP")
 
 # Edited message ban-word filter
 @dp.edited_message_handler(lambda message: message.from_user.id in users)

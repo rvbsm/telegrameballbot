@@ -1,9 +1,5 @@
 import psycopg2
 
-"""	with psycopg2.connect(self.url) as self.conpg:
-			self.conpg.autocommit = True
-			with self.conpg.cursor() as self.curpg:"""
-
 class DataBase:
 	def __init__(self, db: dict):
 		self.url = f"host={db['dbhost']} port={db['dbport']} dbname={db['dbname']} user={db['dbuser']} password={db['dbpass']} sslmode=verify-full sslrootcert=rds-combined-ca-bundle.pem"
@@ -23,6 +19,7 @@ class DataBase:
 		return True
 
 
+
 	def username(self, user_id: int):
 		self.curpg.execute('''SELECT "name" FROM "user" WHERE "user.id" = %s''', (user_id,))
 		result = self.curpg.fetchall()
@@ -32,6 +29,7 @@ class DataBase:
 	def username_set(self, username: str, user_id: int):
 		self.curpg.execute('''UPDATE "user" SET "name" = %s WHERE "user.id" = %s''', (username, user_id))
 		return True
+
 
 
 	def words(self):
@@ -47,6 +45,7 @@ class DataBase:
 	def word_remove(self, word: str):
 		self.curpg.execute('''DELETE FROM "words" WHERE "word" = %s''', (word,))
 		return True
+
 
 
 	def commands(self):
@@ -70,6 +69,7 @@ class DataBase:
 		return True
 
 
+
 	def items(self):
 		self.curpg.execute('''SELECT * FROM "shop"''')
 		rows = self.curpg.fetchall()
@@ -82,6 +82,7 @@ class DataBase:
 	def item_remove(self, name: str):
 		self.curpg.execute('''DELETE FROM "shop" WHERE "name" = %s''', (name,))
 		return True
+
 
 
 	def events(self):
@@ -99,6 +100,8 @@ class DataBase:
 	def event_remove(self, name: str):
 		self.curpg.execute('''DELETE FROM "events" WHERE "name" = %s''', (name,))
 		return True
+
+
 
 	def dictionary(self):
 		self.curpg.execute('''SELECT * FROM "dictionary"''')
@@ -132,6 +135,8 @@ class DataBase:
 		self.curpg.execute('''DELETE FROM "dictionary" WHERE "word" = %s''', (word,))
 		return True
 
+
+
 	def logs(self):
 		self.curpg.execute('''SELECT * FROM "logs"''', ())
 		rows = self.curpg.fetchall()
@@ -144,6 +149,8 @@ class DataBase:
 		self.curpg.execute('''INSERT INTO "logs" ("date", "time", "message_id", "user.id", "percentage", "word", "similar") VALUES (CURRENT_DATE, LOCALTIME(0), %s, %s, %s, %s, %s)''', (message_id, user_id, percentage, word, similar))
 		return True
 
+
+
 	def poll_answer(self, user_id: int):
 		self.curpg.execute('''SELECT "poll_answer" FROM "user" WHERE "user.id" = %s''', (user_id,))
 		result = self.curpg.fetchall()
@@ -153,6 +160,8 @@ class DataBase:
 	def poll_answer_set(self, user_id: int, poll_answer: int):
 		self.curpg.execute('''UPDATE "user" SET "poll_answer" = %s WHERE "user.id" = %s''', (poll_answer, user_id))
 		return True
+
+
 
 	def bet(self, user_id: int):
 		self.curpg.execute('''SELECT "bet" FROM "user" WHERE "user.id" = %s''', (user_id,))
