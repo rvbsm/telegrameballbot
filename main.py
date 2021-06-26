@@ -567,7 +567,7 @@ async def on_startup(dp):
 	global chat, users, admin_users, forecast_poll
 	chat = [-1001400136881]
 	users = [529598217, 932736973, 636619912, 555328241, 200635302, 410275183]
-	admin_users = [200635302, 932736973, 410275183]
+	admin_users = [200635302, 555328241, 410275183]
 	forecast_poll = False
 	await bot.delete_webhook(drop_pending_updates=True)
 	await bot.set_webhook(conf.WEBHOOK_URL, drop_pending_updates=True)
